@@ -1,4 +1,4 @@
-package mtgserver
+package lib
 
 import "fmt"
 
