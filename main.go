@@ -1,9 +1,13 @@
 package main
 
 import (
+    "fmt"
+
     "github.com/charles-uno/mtgserver/lib"
 )
 
 func main() {
-    lib.Hello()
+
+    fmt.Println(lib.LoadDeck())
+
 }

@@ -1,0 +1,27 @@
+- name: Arboreal Grazer
+  casting_cost:
+    green: 1
+    total: 1
+  type: creature
+- name: Explore
+  casting_cost:
+    green: 1
+    total: 2
+  type: sorcery
+- name: Forest
+  type: land
+  taps_for:
+    green: 1
+    total: 1
+  enters_tapped: false
+- name: Primeval Titan
+  casting_cost:
+    green: 2
+    total: 6
+  type: creature
+- name: Simic Growth Chamber
+  type: land
+  taps_for:
+    green: 1
+    total: 2
+  enters_tapped: true
