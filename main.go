@@ -2,6 +2,8 @@ package main
 
 import (
     "fmt"
+    "math/rand"
+    "time"
 
     "github.com/charles-uno/mtgserver/lib"
 )
@@ -15,10 +17,21 @@ import (
 func main() {
 
     deck := lib.LoadDeck()
+    hand, library := deck[:7], deck[7:]
+    onThePlay := flip()
 
-    hand, deck := deck[:7], deck[7:]
+    fmt.Println(lib.PrettyCards(hand))
 
-    fmt.Println(hand)
+    gs := lib.GameState(hand, library, onThePlay)
+
+    fmt.Println(gs)
+
+}
 
 
+func flip() bool {
+    // Random generator should be seeded from shuffling, but let's be sure. We
+    // only call this once per game anyway.
+    rand.Seed(time.Now().UTC().UnixNano())
+    return rand.Intn(2) == 0
 }
