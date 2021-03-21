@@ -27,12 +27,11 @@ type gameState struct {
 func GameState(hand []string, library []string, otp bool) gameState {
     gs := gameState{
         hand: Cards(hand),
+        // Empty string is fine for the initial game state
+        hash: "",
         library: CardArray(library),
         onThePlay: otp,
     }
-
-    // TODO: compute the hash here rather than dynamically
-
     return gs
 }
 
@@ -58,6 +57,6 @@ func (gs *gameState) Hash() string {
             strconv.FormatBool(gs.done),
             gs.library.Pretty(),
         },
-        "&",
+        ";",
     )
 }
