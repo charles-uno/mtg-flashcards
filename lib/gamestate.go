@@ -36,12 +36,22 @@ func GameState(hand []string, library []string, otp bool) gameState {
 }
 
 
+func (self *gameState) Pretty() string {
+    lines := []string{}
+    lines = append(lines, "hand: " + self.hand.Pretty())
+    return strings.Join(lines, "\n")
+}
 
 
+func (clone gameState) Draw(n int) gameStateSet {
+    popped, library := clone.library.SplitAfter(n)
+    clone.library = library
+    clone.hand = clone.hand.Plus(popped...)
+    return GameStateSet(clone)
+}
 
 
-
-func (gs *gameState) getLog() string {
+func (gs *gameState) GetLog() string {
     return gs.log
 }
 

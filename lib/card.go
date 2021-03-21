@@ -50,6 +50,17 @@ func (self *cardArray) Pretty() string {
 }
 
 
+func (ca cardArray) SplitAfter(n int) ([]card, cardArray) {
+    popped := ca.arr[:n]
+    ca.arr = ca.arr[n:]
+    return popped, ca
+}
+
+
+
+
+
+
 type cards struct {
     // A non-ordered container of cards, such as a hand or battlefield
     cardsCounts map[card]int
@@ -76,6 +87,20 @@ func (self *cards) Pretty() string {
     }
     sort.Strings(chunks)
     return strings.Join(chunks, " ")
+}
+
+
+func (self *cards) Plus(elts ...card) cards {
+    cardsCounts := make(map[card]int)
+    // Deep copy the original
+    for c, n := range self.cardsCounts {
+        cardsCounts[c] = n
+    }
+    // Append the new elements
+    for _, c := range elts {
+        cardsCounts[c] += 1
+    }
+    return cards{cardsCounts: cardsCounts}
 }
 
 

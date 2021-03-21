@@ -21,8 +21,12 @@ func main() {
     onThePlay := flip()
 
     gs := lib.GameState(hand, library, onThePlay)
+    fmt.Println(gs.Pretty())
 
-    fmt.Println(gs)
+    gss := gs.Draw(1)
+    fmt.Println(gss.Pretty())
+
+
 
 }
 
