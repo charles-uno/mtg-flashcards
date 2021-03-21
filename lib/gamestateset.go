@@ -7,33 +7,60 @@ import (
 )
 
 
-type gameStateSet struct {
+type gameManager struct {
     // Use a map to imitate a Python-style set of game states
     states map[string]gameState
 }
 
 
-func GameStateSet(states ...gameState) gameStateSet {
-    gss := gameStateSet{
+func NewGame(hand []card, library []card, otp bool) gameManager {
+    state := gameState{
+        hand: CardMap(hand),
+        // Empty string is fine for the initial game state
+        hash: "",
+        library: CardArray(library),
+        onThePlay: otp,
+    }
+    return GameManager(state)
+}
+
+
+func GameManager(states ...gameState) gameManager {
+    manager := gameManager{
         states: make(map[string]gameState),
     }
-    for _, gs := range states {
-        gss.Add(gs)
+    for _, state := range states {
+        manager.Add(state)
     }
-    return gss
+    return manager
 }
 
 
-func (self *gameStateSet) Pretty() string {
-    gs, err := self.Get()
-    if err != nil {
-        log.Fatal(err)
-    }
-    return gs.Pretty()
+func (self *gameManager) Next() gameManager {
+    manager := GameManager()
+
+    // Passing the turn is always an option
+
+    // Cast spells
+
+    // Play lands
+
+    return manager
 }
 
 
-func (self *gameStateSet) Pop() (gameState, error) {
+
+
+func (self *gameManager) Pretty() string {
+    lines := []string{}
+    for _, state := self.states {
+        lines = append(lines, state.Pretty())
+    }
+    return strings.Join(lines, "\n---\n")
+}
+
+
+func (self *gameManager) Pop() (gameState, error) {
     for key, gs := range self.states {
         delete(self.states, key)
         return gs, nil
@@ -42,7 +69,7 @@ func (self *gameStateSet) Pop() (gameState, error) {
 }
 
 
-func (self *gameStateSet) Get() (gameState, error) {
+func (self *gameManager) Get() (gameState, error) {
     for _, gs := range self.states {
         return gs, nil
     }
@@ -50,25 +77,25 @@ func (self *gameStateSet) Get() (gameState, error) {
 }
 
 
-func (self *gameStateSet) Add(gs gameState) {
+func (self *gameManager) Add(gs gameState) {
     self.states[gs.Hash()] = gs
 }
 
 
-func (self *gameStateSet) Update(other gameStateSet) {
+func (self *gameManager) Update(other gameManager) {
     for hash, state := range other.states {
         self.states[hash] = state
     }
 }
 
 
-func (self *gameStateSet) Size() int {
+func (self *gameManager) Size() int {
     return len(self.states)
 }
 
 
-func (self *gameStateSet) Draw(n int) gameStateSet {
-    ret := GameStateSet()
+func (self *gameManager) Draw(n int) gameManager {
+    ret := gameManager()
     for _, state := range self.states {
         ret.Update(state.Draw(n))
     }

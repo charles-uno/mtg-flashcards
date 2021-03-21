@@ -24,18 +24,6 @@ type gameState struct {
 }
 
 
-func NewGame(hand []card, library []card, otp bool) gameStateSet {
-    gs := gameState{
-        hand: CardMap(hand),
-        // Empty string is fine for the initial game state
-        hash: "",
-        library: CardArray(library),
-        onThePlay: otp,
-    }
-    return GameStateSet(gs)
-}
-
-
 func (self *gameState) Pretty() string {
     lines := []string{}
     lines = append(lines, "hand: " + self.hand.Pretty())
@@ -43,11 +31,11 @@ func (self *gameState) Pretty() string {
 }
 
 
-func (clone gameState) Draw(n int) gameStateSet {
+func (clone gameState) Draw(n int) gameManager {
     popped, library := clone.library.SplitAfter(n)
     clone.library = library
     clone.hand = clone.hand.Plus(popped...)
-    return GameStateSet(clone)
+    return gameManager(clone)
 }
 
 
