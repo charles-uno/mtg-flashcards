@@ -35,7 +35,7 @@ func (clone gameState) Draw(n int) gameManager {
     popped, library := clone.library.SplitAfter(n)
     clone.library = library
     clone.hand = clone.hand.Plus(popped...)
-    return gameManager(clone)
+    return GameManager(clone)
 }
 
 

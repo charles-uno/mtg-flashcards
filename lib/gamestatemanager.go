@@ -2,8 +2,7 @@ package lib
 
 
 import (
-    "errors"
-    "log"
+    "strings"
 )
 
 
@@ -49,31 +48,12 @@ func (self *gameManager) Next() gameManager {
 }
 
 
-
-
 func (self *gameManager) Pretty() string {
     lines := []string{}
-    for _, state := self.states {
+    for _, state := range self.states {
         lines = append(lines, state.Pretty())
     }
     return strings.Join(lines, "\n---\n")
-}
-
-
-func (self *gameManager) Pop() (gameState, error) {
-    for key, gs := range self.states {
-        delete(self.states, key)
-        return gs, nil
-    }
-    return gameState{}, errors.New("No game state to pop")
-}
-
-
-func (self *gameManager) Get() (gameState, error) {
-    for _, gs := range self.states {
-        return gs, nil
-    }
-    return gameState{}, errors.New("No game state to get")
 }
 
 
@@ -89,13 +69,8 @@ func (self *gameManager) Update(other gameManager) {
 }
 
 
-func (self *gameManager) Size() int {
-    return len(self.states)
-}
-
-
 func (self *gameManager) Draw(n int) gameManager {
-    ret := gameManager()
+    ret := GameManager()
     for _, state := range self.states {
         ret.Update(state.Draw(n))
     }
