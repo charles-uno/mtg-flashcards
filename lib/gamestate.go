@@ -11,9 +11,9 @@ import (
 // during a game. Any change in game state, like drawing a card or casting a
 // spell, is enacted by creating a new state.
 type gameState struct {
-    battlefield cards
+    battlefield cardMap
     done bool
-    hand cards
+    hand cardMap
     hash string
     landPlays int
     library cardArray
@@ -24,15 +24,15 @@ type gameState struct {
 }
 
 
-func GameState(hand []string, library []string, otp bool) gameState {
+func NewGame(hand []card, library []card, otp bool) gameStateSet {
     gs := gameState{
-        hand: Cards(hand),
+        hand: CardMap(hand),
         // Empty string is fine for the initial game state
         hash: "",
         library: CardArray(library),
         onThePlay: otp,
     }
-    return gs
+    return GameStateSet(gs)
 }
 
 

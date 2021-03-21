@@ -11,23 +11,23 @@ import (
 )
 
 
-func LoadDeck() []string {
-    list := []string{}
+func LoadDeck() []card {
+    list := []card{}
     for _, line := range readLines("decklist.txt") {
         n_card := strings.SplitN(line, " ", 2)
         n, err := strconv.Atoi(n_card[0])
         if err != nil { log.Fatal(err) }
         for i := 0; i<n; i++ {
-            list = append(list, n_card[1])
+            list = append(list, Card(n_card[1]))
         }
     }
     return shuffled(list)
 }
 
 
-func shuffled(deck []string) []string {
+func shuffled(deck []card) []card {
     rand.Seed(time.Now().UTC().UnixNano())
-    ret := make([]string, len(deck))
+    ret := make([]card, len(deck))
     for i, j := range rand.Perm(len(deck)) {
         ret[i] = deck[j]
     }

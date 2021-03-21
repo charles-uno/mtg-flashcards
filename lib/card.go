@@ -5,8 +5,6 @@ import (
     "gopkg.in/yaml.v2"
     "io/ioutil"
     "log"
-    "sort"
-    "strconv"
     "strings"
 )
 
@@ -23,84 +21,6 @@ func Card(name string) card {
 
 func (self *card) Pretty() string {
     return GetCardData(self.name).Pretty
-}
-
-
-type cardArray struct {
-    // An ordered sequence of card names, such as a library
-    arr []card
-}
-
-
-func CardArray(names []string) cardArray {
-    arr := []card{}
-    for _, name := range names {
-        arr = append(arr, Card(name))
-    }
-    return cardArray{arr: arr}
-}
-
-
-func (self *cardArray) Pretty() string {
-    chunks := []string{}
-    for _, c := range self.arr {
-        chunks = append(chunks, c.Pretty())
-    }
-    return strings.Join(chunks, " ")
-}
-
-
-func (ca cardArray) SplitAfter(n int) ([]card, cardArray) {
-    popped := ca.arr[:n]
-    ca.arr = ca.arr[n:]
-    return popped, ca
-}
-
-
-
-
-
-
-type cards struct {
-    // A non-ordered container of cards, such as a hand or battlefield
-    cardsCounts map[card]int
-}
-
-
-func Cards(names []string) cards {
-    cardsCounts := make(map[card]int)
-    for _, name := range names {
-        cardsCounts[Card(name)] += 1
-    }
-    return cards{cardsCounts: cardsCounts}
-}
-
-
-func (self *cards) Pretty() string {
-    chunks := []string{}
-    for c, n := range self.cardsCounts {
-        chunk := c.Pretty()
-        if n > 1 {
-            chunk += "*" + strconv.Itoa(n)
-        }
-        chunks = append(chunks, chunk)
-    }
-    sort.Strings(chunks)
-    return strings.Join(chunks, " ")
-}
-
-
-func (self *cards) Plus(elts ...card) cards {
-    cardsCounts := make(map[card]int)
-    // Deep copy the original
-    for c, n := range self.cardsCounts {
-        cardsCounts[c] = n
-    }
-    // Append the new elements
-    for _, c := range elts {
-        cardsCounts[c] += 1
-    }
-    return cards{cardsCounts: cardsCounts}
 }
 
 

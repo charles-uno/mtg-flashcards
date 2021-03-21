@@ -18,14 +18,14 @@ func GameStateSet(states ...gameState) gameStateSet {
         states: make(map[string]gameState),
     }
     for _, gs := range states {
-        gss.add(gs)
+        gss.Add(gs)
     }
     return gss
 }
 
 
 func (self *gameStateSet) Pretty() string {
-    gs, err := self.get()
+    gs, err := self.Get()
     if err != nil {
         log.Fatal(err)
     }
@@ -33,7 +33,7 @@ func (self *gameStateSet) Pretty() string {
 }
 
 
-func (self *gameStateSet) pop() (gameState, error) {
+func (self *gameStateSet) Pop() (gameState, error) {
     for key, gs := range self.states {
         delete(self.states, key)
         return gs, nil
@@ -42,7 +42,7 @@ func (self *gameStateSet) pop() (gameState, error) {
 }
 
 
-func (self *gameStateSet) get() (gameState, error) {
+func (self *gameStateSet) Get() (gameState, error) {
     for _, gs := range self.states {
         return gs, nil
     }
@@ -50,11 +50,27 @@ func (self *gameStateSet) get() (gameState, error) {
 }
 
 
-func (self *gameStateSet) add(gs gameState) {
+func (self *gameStateSet) Add(gs gameState) {
     self.states[gs.Hash()] = gs
 }
 
 
-func (self *gameStateSet) size() int {
+func (self *gameStateSet) Update(other gameStateSet) {
+    for hash, state := range other.states {
+        self.states[hash] = state
+    }
+}
+
+
+func (self *gameStateSet) Size() int {
     return len(self.states)
+}
+
+
+func (self *gameStateSet) Draw(n int) gameStateSet {
+    ret := GameStateSet()
+    for _, state := range self.states {
+        ret.Update(state.Draw(n))
+    }
+    return ret
 }

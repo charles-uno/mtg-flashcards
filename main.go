@@ -20,11 +20,11 @@ func main() {
     hand, library := deck[:7], deck[7:]
     onThePlay := flip()
 
-    gs := lib.GameState(hand, library, onThePlay)
-    fmt.Println(gs.Pretty())
+    state := lib.NewGame(hand, library, onThePlay)
+    fmt.Println(state.Pretty())
 
-    gss := gs.Draw(1)
-    fmt.Println(gss.Pretty())
+    state = state.Draw(1)
+    fmt.Println(state.Pretty())
 
 
 
