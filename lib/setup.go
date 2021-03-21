@@ -11,16 +11,7 @@ import (
 )
 
 
-func LoadDeck() []card {
-    deck := []card{}
-    for _, card_name := range loadCardNames() {
-        deck = append(deck, Card(card_name))
-    }
-    return shuffled(deck)
-}
-
-
-func loadCardNames() []string {
+func LoadDeck() []string {
     list := []string{}
     for _, line := range readLines("decklist.txt") {
         n_card := strings.SplitN(line, " ", 2)
@@ -30,13 +21,13 @@ func loadCardNames() []string {
             list = append(list, n_card[1])
         }
     }
-    return list
+    return shuffled(list)
 }
 
 
-func shuffled(deck []card) []card {
+func shuffled(deck []string) []string {
     rand.Seed(time.Now().UTC().UnixNano())
-    ret := make([]card, len(deck))
+    ret := make([]string, len(deck))
     for i, j := range rand.Perm(len(deck)) {
         ret[i] = deck[j]
     }

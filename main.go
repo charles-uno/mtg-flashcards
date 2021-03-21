@@ -20,8 +20,6 @@ func main() {
     hand, library := deck[:7], deck[7:]
     onThePlay := flip()
 
-    fmt.Println(lib.PrettyCards(hand))
-
     gs := lib.GameState(hand, library, onThePlay)
 
     fmt.Println(gs)

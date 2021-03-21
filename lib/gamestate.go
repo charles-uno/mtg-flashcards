@@ -11,12 +11,12 @@ import (
 // during a game. Any change in game state, like drawing a card or casting a
 // spell, is enacted by creating a new state.
 type gameState struct {
-    battlefield []card
+    battlefield cards
     done bool
-    hand []card
+    hand cards
     hash string
     landPlays int
-    library []card
+    library cardArray
     log string
     manaPool mana
     onThePlay bool
@@ -24,10 +24,10 @@ type gameState struct {
 }
 
 
-func GameState(hand []card, library []card, otp bool) gameState {
+func GameState(hand []string, library []string, otp bool) gameState {
     gs := gameState{
-        hand: hand,
-        library: library,
+        hand: Cards(hand),
+        library: CardArray(library),
         onThePlay: otp,
     }
 
@@ -52,11 +52,11 @@ func (gs *gameState) Hash() string {
     // the order of the library
     return strings.Join(
         []string{
-            PrettyCards(gs.hand),
-            PrettyCards(gs.battlefield),
+            gs.hand.Pretty(),
+            gs.battlefield.Pretty(),
             gs.manaPool.Pretty(),
             strconv.FormatBool(gs.done),
-            PrettyCardsOrdered(gs.library),
+            gs.library.Pretty(),
         },
         "&",
     )
