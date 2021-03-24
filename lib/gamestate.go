@@ -39,6 +39,32 @@ func (clone gameState) Draw(n int) gameManager {
 }
 
 
+func (clone gameState) PassTurn() gameManager {
+
+    // Empty mana pool
+    // Tap out
+
+    clone.manaPool = mana{}
+    for c, n := range clone.battlefield.Items() {
+        m := c.TapsFor()
+        clone.manaPool = clone.manaPool.Plus(m.Times(n))
+    }
+
+    // Pay for Pact
+    // Reset land drops
+    // Check for Dryad, Azusa
+    // Draw a card
+
+
+    return GameManager()
+}
+
+
+
+
+
+
+
 func (gs *gameState) GetLog() string {
     return gs.log
 }

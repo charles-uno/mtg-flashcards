@@ -11,6 +11,22 @@ type mana struct {
 }
 
 
+func (self *mana) Times(n int) mana {
+    return mana{
+        Green: self.Green*n,
+        Total: self.Total*n,
+    }
+}
+
+
+func (self *mana) Plus(other mana) mana {
+    return mana{
+        Green: self.Green + other.Green,
+        Total: self.Total + other.Total,
+    }
+}
+
+
 func (m *mana) Pretty() string {
     s := ""
     if m.Total > m.Green || m.Green == 0 {

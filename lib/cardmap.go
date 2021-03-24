@@ -40,6 +40,11 @@ func (self *cardMap) Pretty() string {
 }
 
 
+func (self *cardMap) Items() map[card]int {
+    return self.counts
+}
+
+
 func (self *cardMap) Plus(cards ...card) cardMap {
     counts := make(map[card]int)
     for c, n := range self.counts {

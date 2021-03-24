@@ -1,4 +1,5 @@
-15 Primeval Titan
-15 Forest
-15 Simic Growth Chamber
-15 Arboreal Grazer
+20 Primeval Titan
+40 Forest
+
+# Explore
+# Simic Growth Chamber

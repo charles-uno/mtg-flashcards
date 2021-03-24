@@ -24,6 +24,12 @@ func (self *card) Pretty() string {
 }
 
 
+func (self *card) TapsFor() mana {
+    return GetCardData(self.name).TapsFor
+}
+
+
+
 type cardData struct {
     // No need to duplicate card metadata over and over. Cache it by card name
     // and look it up as needed.
