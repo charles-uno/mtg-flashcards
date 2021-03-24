@@ -40,29 +40,20 @@ func (clone gameState) Draw(n int) gameManager {
 
 
 func (clone gameState) PassTurn() gameManager {
-
-    // Empty mana pool
-    // Tap out
-
+    // Empty mana pool then tap out
     clone.manaPool = mana{}
     for c, n := range clone.battlefield.Items() {
         m := c.TapsFor()
         clone.manaPool = clone.manaPool.Plus(m.Times(n))
     }
-
-    // Pay for Pact
-    // Reset land drops
-    // Check for Dryad, Azusa
-    // Draw a card
-
-
-    return GameManager()
+    // TODO: pay for Pact
+    // Reset land drops. Check for Dryad, Scout, Azusa
+    clone.landPlays = 1 +
+        clone.battlefield.Count(Card("Dryad of the Ilysian Grove")) +
+        clone.battlefield.Count(Card("Sakura-Tribe Scout")) +
+        2*clone.battlefield.Count(Card("Azusa, Lost but Seeking"))
+    return clone.Draw(1)
 }
-
-
-
-
-
 
 
 func (gs *gameState) GetLog() string {

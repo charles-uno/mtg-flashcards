@@ -45,6 +45,11 @@ func (self *cardMap) Items() map[card]int {
 }
 
 
+func (self *cardMap) Count(c card) int {
+    return self.counts[c]
+}
+
+
 func (self *cardMap) Plus(cards ...card) cardMap {
     counts := make(map[card]int)
     for c, n := range self.counts {
