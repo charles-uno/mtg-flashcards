@@ -40,6 +40,24 @@ func (self *cardMap) Pretty() string {
 }
 
 
+func (self *cardMap) Export() []span {
+    ret := []span{}
+    space := span{Type: "text", Text: " "}
+    for c, n := range self.counts {
+        if n == 0 {
+            continue
+        }
+        ret = append(ret, space)
+        ret = append(ret, c.Export())
+        if n > 1 {
+            mult := span{Type: "text", Text: "*" + strconv.Itoa(n)}
+            ret = append(ret, mult)
+        }
+    }
+    return ret
+}
+
+
 func (self *cardMap) Items() map[card]int {
     return self.counts
 }

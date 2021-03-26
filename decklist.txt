@@ -5,6 +5,7 @@
 4 Dryad of the Ilysian Grove
 4 Summoner's Pact
 4 Azusa, Lost but Seeking
-10 Bojuka Bog
-10 Forest
-12 Simic Growth Chamber
+8 Bojuka Bog
+8 Forest
+8 Simic Growth Chamber
+8 Castle Garenbrig

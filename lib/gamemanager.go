@@ -10,7 +10,7 @@ import (
 type gameManager struct {
     // Use a map to imitate a Python-style set of game states
     states map[string]gameState
-    turn int
+    Turn int
     done bool
 }
 
@@ -33,6 +33,9 @@ func NewGame(hand_raw []card, library_raw []card, otp bool) gameManager {
         onThePlay: otp,
         turn: 0,
     }
+    state.exportBreak()
+    state.exportText(play_order + ", draw ")
+    state.exportCardMap(hand)
     return GameManager(state)
 }
 
@@ -49,7 +52,7 @@ func GameManager(states ...gameState) gameManager {
 
 
 func (self *gameManager) NextTurn() gameManager {
-    if self.size() == 0 {
+    if self.Size() == 0 {
         log.Fatal("called NextTurn on empty gameManager")
     }
     // Once we find a line, we're done iterating
@@ -57,14 +60,14 @@ func (self *gameManager) NextTurn() gameManager {
         return *self
     }
     ret := GameManager()
-    for self.size() > 0 {
+    for self.Size() > 0 {
         state_old := self.Pop()
         for _, state_new := range state_old.NextStates() {
             // If we find a state that gets there, we're done
             if state_new.done {
                 return GameManager(state_new)
             }
-            if state_new.turn == self.turn {
+            if state_new.turn == self.Turn {
                 self.Add(state_new)
             } else {
                 ret.Add(state_new)
@@ -84,11 +87,20 @@ func (self *gameManager) Pretty() string {
 }
 
 
+func (self *gameManager) Export() string {
+    lines := []string{}
+    for _, state := range self.states {
+        lines = append(lines, state.Export())
+    }
+    return strings.Join(lines, "\n~~~\n")
+}
+
+
 func (self *gameManager) Add(state gameState) {
     self.states[state.Hash()] = state
     self.done = state.done
     // Turn is uniform for all states within a gameManager
-    self.turn = state.turn
+    self.Turn = state.turn
 }
 
 
@@ -102,7 +114,7 @@ func (self *gameManager) Pop() gameState {
 }
 
 
-func (self *gameManager) size() int {
+func (self *gameManager) Size() int {
     return len(self.states)
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
     "fmt"
+    "log"
     "math/rand"
     "time"
 
@@ -23,9 +24,17 @@ func main() {
     game := lib.NewGame(hand, library, onThePlay)
 
     for game.IsNotDone() {
+        if game.Turn > 0 {
+            log.Println("starting turn", game.Turn, "with", game.Size(), "states")
+        }
         game = game.NextTurn()
+
     }
     fmt.Println(game.Pretty())
+
+
+//    fmt.Println(game.Export())
+
 
 }
 

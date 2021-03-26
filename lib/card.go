@@ -24,6 +24,11 @@ func (self *card) Pretty() string {
 }
 
 
+func (self *card) Export() span {
+    return span{Type: "card", Text: self.name}
+}
+
+
 func (self *card) TapsFor() mana {
     return GetCardData(self.name).TapsFor
 }
@@ -43,6 +48,15 @@ func (self *card) IsCreature() bool {
     return GetCardData(self.name).Type == "creature"
 }
 
+func (self *card) HasAbility() bool {
+    return GetCardData(self.name).ActivationCost.Total != 0
+}
+
+
+func (self *card) ActivationCost() mana {
+    return GetCardData(self.name).ActivationCost
+}
+
 
 func (self *card) EntersTapped() bool {
     return GetCardData(self.name).EntersTapped
@@ -53,6 +67,7 @@ type cardData struct {
     // No need to duplicate card metadata over and over. Cache it by card name
     // and look it up as needed.
     Name string         `yaml:"name"`
+    ActivationCost mana `yaml:"activation_cost"`
     CastingCost mana    `yaml:"casting_cost"`
     EntersTapped bool   `yaml:"enters_tapped"`
     Pretty string       `yaml:"pretty"`

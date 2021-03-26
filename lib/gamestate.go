@@ -19,6 +19,7 @@ type gameState struct {
     landPlays int
     library cardArray
     log string
+    toExport []span
     manaDebt mana
     manaPool mana
     onThePlay bool
@@ -26,8 +27,19 @@ type gameState struct {
 }
 
 
+type span struct {
+    Type string `yaml:"type"`
+    Text string `yaml:"text"`
+}
+
+
 func (self *gameState) NextStates() []gameState {
     ret := self.passTurn()
+
+    // If we have 6 mana, no need to accumulate more
+
+    // If we have plenty of mana but no Titan, don't bother with Grazer, etc
+
     for c, _ := range self.hand.Items() {
         if c.IsLand() {
             for _, state := range self.play(c) {
@@ -39,20 +51,28 @@ func (self *gameState) NextStates() []gameState {
             }
         }
     }
+    for c, _ := range self.battlefield.Items() {
+        if c.HasAbility() {
+            for _, state := range self.activate(c) {
+                ret = append(ret, state)
+            }
+        }
+    }
     return ret
 }
 
 
 func (clone gameState) passTurn() []gameState {
     clone.turn += 1
-    clone.note("\n--- turn " + strconv.Itoa(clone.turn))
+    clone.exportBreak()
+    clone.exportText("--- turn " + strconv.Itoa(clone.turn))
     // Empty mana pool then tap out
     clone.manaPool = mana{}
     for c, n := range clone.battlefield.Items() {
         m := c.TapsFor()
         clone.manaPool = clone.manaPool.Plus(m.Times(n))
     }
-    clone.noteManaPool()
+    clone.exportManaPool()
     // Pay for Pact
     if clone.manaDebt.Total > 0 {
         m, err := clone.manaPool.Minus(clone.manaDebt)
@@ -61,8 +81,8 @@ func (clone gameState) passTurn() []gameState {
         }
         clone.manaPool = m
         clone.manaDebt = Mana("")
-        clone.note(", pay for pact")
-        clone.noteManaPool()
+        clone.exportText(", pay for pact")
+        clone.exportManaPool()
     }
     // TODO: pay for Pact
     // Reset land drops. Check for Dryad, Scout, Azusa
@@ -78,6 +98,32 @@ func (clone gameState) passTurn() []gameState {
 }
 
 
+func (clone gameState) activate(c card) []gameState {
+    // Is this card on the battlefield?
+    if clone.battlefield.Count(c) == 0 {
+        return []gameState{}
+    }
+    // Do we have enough mana to activate it?
+    cost := c.ActivationCost()
+    m, err := clone.manaPool.Minus(cost)
+    if err != nil {
+        return []gameState{}
+    }
+    clone.manaPool = m
+    clone.exportBreak()
+    clone.exportText("activate ")
+    clone.exportCard(c)
+    clone.exportManaPool()
+    // Now figure out what it does
+    switch c.name {
+        case "Castle Garenbrig":
+            return clone.activateCastleGarenbrig()
+    }
+    log.Fatal("not sure how to activate: " + c.name)
+    return []gameState{}
+}
+
+
 func (clone gameState) cast(c card) []gameState {
     // Is this spell in our hand?
     if clone.hand.Count(c) == 0 {
@@ -90,9 +136,11 @@ func (clone gameState) cast(c card) []gameState {
         return []gameState{}
     }
     clone.manaPool = m
-    clone.note("\ncast " + c.Pretty())
+    clone.exportBreak()
+    clone.exportText("cast ")
+    clone.exportCard(c)
     clone.hand = clone.hand.Minus(c)
-    clone.noteManaPool()
+    clone.exportManaPool()
     // Now figure out what it does
     switch c.name {
         case "Amulet of Vigor":
@@ -125,7 +173,16 @@ func (clone gameState) play(c card) []gameState {
         return []gameState{}
     }
     clone.landPlays -= 1
-    clone.note("\nplay " + c.Pretty())
+    clone.exportBreak()
+    clone.exportText("play ")
+    clone.exportCard(c)
+    if c.name == "Castle Garenbrig" {
+        if clone.battlefield.Count(Card("Forest")) > 0 {
+            return clone.playUntapped(c)
+        } else {
+            return clone.playTapped(c)
+        }
+    }
     if c.EntersTapped() {
         return clone.playTapped(c)
     } else {
@@ -139,7 +196,7 @@ func (clone gameState) playTapped(c card) []gameState {
     m := c.TapsFor()
     for i := 0; i < nAmulets; i++ {
         clone.manaPool = clone.manaPool.Plus(m)
-        clone.noteManaPool()
+        clone.exportManaPool()
     }
     return clone.playHelper(c)
 }
@@ -147,7 +204,7 @@ func (clone gameState) playTapped(c card) []gameState {
 
 func (clone gameState) playUntapped(c card) []gameState {
     clone.manaPool = clone.manaPool.Plus(c.TapsFor())
-    clone.noteManaPool()
+    clone.exportManaPool()
     return clone.playHelper(c)
 }
 
@@ -159,6 +216,8 @@ func (clone gameState) playHelper(c card) []gameState {
     switch c.name {
         case "Bojuka Bog":
             return clone.playBojukaBog()
+        case "Castle Garenbrig":
+            return clone.playCastleGarenbrig()
         case "Forest":
             return clone.playForest()
         case "Simic Growth Chamber":
@@ -166,6 +225,14 @@ func (clone gameState) playHelper(c card) []gameState {
     }
     log.Fatal("not sure how to play: " + c.name)
     return []gameState{}
+}
+
+
+func (clone gameState) activateCastleGarenbrig() []gameState {
+    clone.manaPool = clone.manaPool.Plus(Mana("GGGGGG"))
+    clone.exportManaPool()
+    // Only activate immediately before casting Titan
+    return clone.cast(Card("Primeval Titan"))
 }
 
 
@@ -182,7 +249,8 @@ func (self *gameState) castArborealGrazer() []gameState {
             continue
         }
         clone := self.clone()
-        clone.note(", play " + c.Pretty())
+        clone.exportText(", play ")
+        clone.exportCard(c)
         ret = append(ret, clone.playTapped(c)...)
     }
     return ret
@@ -220,7 +288,8 @@ func (self *gameState) castSummonersPact() []gameState {
         }
         clone := self.clone()
         clone.hand = clone.hand.Plus(c)
-        clone.note(", grab " + c.Pretty())
+        clone.exportText(", grab ")
+        clone.exportCard(c)
         clone.manaDebt = clone.manaDebt.Plus(Mana("2GG"))
         ret = append(ret, clone)
     }
@@ -229,6 +298,11 @@ func (self *gameState) castSummonersPact() []gameState {
 
 
 func (clone gameState) playBojukaBog() []gameState {
+    return []gameState{clone}
+}
+
+
+func (clone gameState) playCastleGarenbrig() []gameState {
     return []gameState{clone}
 }
 
@@ -247,7 +321,8 @@ func (self *gameState) playSimicGrowthChamber() []gameState {
         clone := self.clone()
         clone.battlefield = clone.battlefield.Minus(c)
         clone.hand = clone.hand.Plus(c)
-        clone.note(", bounce " + c.Pretty())
+        clone.exportText(", bounce ")
+        clone.exportCard(c)
         ret = append(ret, clone)
     }
     return ret
@@ -268,21 +343,64 @@ func (clone gameState) draw(n int) []gameState {
     popped, library := clone.library.SplitAfter(n)
     clone.library = library
     clone.hand = clone.hand.Plus(popped...)
-    popped_map := CardMap(popped)
-    clone.note(", draw " + popped_map.Pretty())
+    clone.exportText(", draw ")
+    clone.exportCardMap(CardMap(popped))
     return []gameState{clone}
+}
+
+
+func (self *gameState) exportBreak() {
+    s := span{Type: "break", Text: ""}
+    self.toExport = append(self.toExport, s)
+    self.note("\n")
+}
+
+
+func (self *gameState) exportManaPool() {
+    if self.manaPool.Total > 0 {
+        self.exportText(", " + self.manaPool.Pretty() + " in pool")
+    }
+}
+
+
+func (self *gameState) exportText(text string) {
+    s := span{Type: "text", Text: text}
+    self.toExport = append(self.toExport, s)
+    self.note(s.Text)
+}
+
+
+func (self *gameState) exportCard(c card) {
+    self.toExport = append(self.toExport, c.Export())
+    self.note(c.Pretty())
+}
+
+
+func (self *gameState) exportCardMap(cm cardMap) {
+    for _, s := range cm.Export() {
+        self.toExport = append(self.toExport, s)
+    }
+    self.note(cm.Pretty())
+}
+
+
+func (self *gameState) Export() string {
+    ret := ""
+    for _, s := range self.toExport {
+        if s.Type == "text" {
+            ret += s.Text
+        } else if s.Type == "break" {
+            ret += "\n"
+        } else {
+            ret += "{" + s.Text + "}"
+        }
+    }
+    return ret
 }
 
 
 func (self *gameState) note(s string) {
     self.log += s
-}
-
-
-func (self *gameState) noteManaPool() {
-    if self.manaPool.Total > 0 {
-        self.log += ", " + self.manaPool.Pretty() + " in pool"
-    }
 }
 
 

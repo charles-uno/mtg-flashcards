@@ -19,6 +19,15 @@
     green: 0
     total: 1
   enters_tapped: true
+- name: Castle Garenbrig
+  type: land
+  taps_for:
+    green: 1
+    total: 1
+  enters_tapped: true
+  activation_cost:
+    green: 3
+    total: 5
 - name: Dryad of the Ilysian Grove
   casting_cost:
     green: 1
