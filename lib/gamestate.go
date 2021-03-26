@@ -67,18 +67,6 @@ func (clone gameState) passTurn() []gameState {
 }
 
 
-func (clone gameState) draw(n int) []gameState {
-    popped, library := clone.library.SplitAfter(n)
-    clone.library = library
-    clone.hand = clone.hand.Plus(popped...)
-
-    popped_map := CardMap(popped)
-    clone.note(", draw " + popped_map.Pretty())
-
-    return []gameState{clone}
-}
-
-
 func (clone gameState) cast(c card) []gameState {
     // Is this spell in our hand?
     if clone.hand.Count(c) == 0 {
@@ -95,6 +83,8 @@ func (clone gameState) cast(c card) []gameState {
     clone.noteManaPool()
     // Now figure out what it does
     switch c.name {
+        case "Explore":
+            return clone.castExplore()
         case "Primeval Titan":
             return clone.castPrimevalTitan()
     }
@@ -140,6 +130,12 @@ func (clone gameState) castPrimevalTitan() []gameState {
 }
 
 
+func (clone gameState) castExplore() []gameState {
+    clone.landDrops += 1
+    return clone.draw(1)
+}
+
+
 func (clone gameState) playForest() []gameState {
     return []gameState{clone}
 }
@@ -147,6 +143,18 @@ func (clone gameState) playForest() []gameState {
 
 func (gs *gameState) Pretty() string {
     return gs.log
+}
+
+
+func (clone gameState) draw(n int) []gameState {
+    popped, library := clone.library.SplitAfter(n)
+    clone.library = library
+    clone.hand = clone.hand.Plus(popped...)
+
+    popped_map := CardMap(popped)
+    clone.note(", draw " + popped_map.Pretty())
+
+    return []gameState{clone}
 }
 
 
