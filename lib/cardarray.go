@@ -17,6 +17,12 @@ func CardArray(arr []card) cardArray {
 }
 
 
+func (self *cardArray) Items() map[card]int {
+    cm := CardMap(self.arr)
+    return cm.Items()
+}
+
+
 func (self *cardArray) Pretty() string {
     chunks := []string{}
     for _, c := range self.arr {

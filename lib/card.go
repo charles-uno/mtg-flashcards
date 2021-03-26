@@ -39,6 +39,11 @@ func (self *card) IsLand() bool {
 }
 
 
+func (self *card) IsCreature() bool {
+    return GetCardData(self.name).Type == "creature"
+}
+
+
 func (self *card) EntersTapped() bool {
     return GetCardData(self.name).EntersTapped
 }

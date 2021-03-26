@@ -53,6 +53,17 @@ func (clone gameState) passTurn() []gameState {
         clone.manaPool = clone.manaPool.Plus(m.Times(n))
     }
     clone.noteManaPool()
+    // Pay for Pact
+    if clone.manaDebt.Total > 0 {
+        m, err := clone.manaPool.Minus(clone.manaDebt)
+        if err != nil {
+            return []gameState{}
+        }
+        clone.manaPool = m
+        clone.manaDebt = Mana("")
+        clone.note(", pay for pact")
+        clone.noteManaPool()
+    }
     // TODO: pay for Pact
     // Reset land drops. Check for Dryad, Scout, Azusa
     clone.landPlays = 1 +
@@ -88,10 +99,14 @@ func (clone gameState) cast(c card) []gameState {
             return clone.castAmuletOfVigor()
         case "Arboreal Grazer":
             return clone.castArborealGrazer()
+        case "Dryad of the Ilysian Grove":
+            return clone.castDryadOfTheIlysianGrove()
         case "Explore":
             return clone.castExplore()
         case "Primeval Titan":
             return clone.castPrimevalTitan()
+        case "Summoner's Pact":
+            return clone.castSummonersPact()
     }
     log.Fatal("not sure how to cast: " + c.name)
     return []gameState{}
@@ -170,6 +185,12 @@ func (self *gameState) castArborealGrazer() []gameState {
 }
 
 
+func (clone gameState) castDryadOfTheIlysianGrove() []gameState {
+    clone.battlefield = clone.battlefield.Plus(Card("Dryad of the Ilysian Grove"))
+    return []gameState{clone}
+}
+
+
 func (clone gameState) castExplore() []gameState {
     clone.landPlays += 1
     return clone.draw(1)
@@ -179,6 +200,22 @@ func (clone gameState) castExplore() []gameState {
 func (clone gameState) castPrimevalTitan() []gameState {
     clone.done = true
     return []gameState{clone}
+}
+
+
+func (self *gameState) castSummonersPact() []gameState {
+    ret := []gameState{}
+    for c, _ := range self.library.Items() {
+        if !c.IsCreature() {
+            continue
+        }
+        clone := self.clone()
+        clone.hand = clone.hand.Plus(c)
+        clone.note(", grab " + c.Pretty())
+        clone.manaDebt = clone.manaDebt.Plus(Mana("2GG"))
+        ret = append(ret, clone)
+    }
+    return ret
 }
 
 
