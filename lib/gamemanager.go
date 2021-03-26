@@ -29,12 +29,11 @@ func NewGame(hand_raw []card, library_raw []card, otp bool) gameManager {
         hash: "",
         landPlays: 0,
         library: CardArray(library_raw),
-        log: play_order + ", draw " + hand.Pretty(),
         onThePlay: otp,
         turn: 0,
     }
     state.exportBreak()
-    state.exportText(play_order + ", draw ")
+    state.exportText(play_order + ", opening hand: ")
     state.exportCardMap(hand)
     return GameManager(state)
 }

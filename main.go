@@ -30,11 +30,12 @@ func main() {
         game = game.NextTurn()
 
     }
+
+    fmt.Println("\n\n")
     fmt.Println(game.Pretty())
 
-
-//    fmt.Println(game.Export())
-
+    fmt.Println("\n\n")
+    fmt.Println(game.Export())
 
 }
 

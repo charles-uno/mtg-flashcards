@@ -349,7 +349,18 @@ func (clone gameState) draw(n int) []gameState {
 }
 
 
+func (self *gameState) refreshExport() {
+    te := []span{}
+    for _, s := range self.toExport {
+        te = append(te, s)
+    }
+    self.toExport = te
+}
+
+
+
 func (self *gameState) exportBreak() {
+    self.refreshExport()
     s := span{Type: "break", Text: ""}
     self.toExport = append(self.toExport, s)
     self.note("\n")
@@ -357,6 +368,7 @@ func (self *gameState) exportBreak() {
 
 
 func (self *gameState) exportManaPool() {
+    self.refreshExport()
     if self.manaPool.Total > 0 {
         self.exportText(", " + self.manaPool.Pretty() + " in pool")
     }
@@ -364,6 +376,7 @@ func (self *gameState) exportManaPool() {
 
 
 func (self *gameState) exportText(text string) {
+    self.refreshExport()
     s := span{Type: "text", Text: text}
     self.toExport = append(self.toExport, s)
     self.note(s.Text)
@@ -371,12 +384,14 @@ func (self *gameState) exportText(text string) {
 
 
 func (self *gameState) exportCard(c card) {
+    self.refreshExport()
     self.toExport = append(self.toExport, c.Export())
     self.note(c.Pretty())
 }
 
 
 func (self *gameState) exportCardMap(cm cardMap) {
+    self.refreshExport()
     for _, s := range cm.Export() {
         self.toExport = append(self.toExport, s)
     }
