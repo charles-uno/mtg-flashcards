@@ -29,6 +29,20 @@ func (self *card) TapsFor() mana {
 }
 
 
+func (self *card) CastingCost() mana {
+    return GetCardData(self.name).CastingCost
+}
+
+
+func (self *card) IsLand() bool {
+    return GetCardData(self.name).Type == "land"
+}
+
+
+func (self *card) EntersTapped() bool {
+    return GetCardData(self.name).EntersTapped
+}
+
 
 type cardData struct {
     // No need to duplicate card metadata over and over. Cache it by card name

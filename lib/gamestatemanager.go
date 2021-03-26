@@ -35,16 +35,12 @@ func GameManager(states ...gameState) gameManager {
 }
 
 
-func (self *gameManager) Next() gameManager {
-    manager := GameManager()
-
-    // Passing the turn is always an option
-
-    // Cast spells
-
-    // Play lands
-
-    return manager
+func (self *gameManager) NextSteps() gameManager {
+    gm := GameManager()
+    for _, gs := range self.states {
+        gm.Update(gs.NextSteps())
+    }
+    return gm
 }
 
 
