@@ -8,6 +8,17 @@
     green: 1
     total: 1
   type: creature
+- name: Azusa, Lost but Seeking
+  casting_cost:
+    green: 1
+    total: 3
+  type: creature
+- name: Bojuka Bog
+  type: land
+  taps_for:
+    green: 0
+    total: 1
+  enters_tapped: true
 - name: Dryad of the Ilysian Grove
   casting_cost:
     green: 1

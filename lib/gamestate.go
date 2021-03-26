@@ -99,6 +99,8 @@ func (clone gameState) cast(c card) []gameState {
             return clone.castAmuletOfVigor()
         case "Arboreal Grazer":
             return clone.castArborealGrazer()
+        case "Azusa, Lost but Seeking":
+            return clone.castAzusaLostButSeeking()
         case "Dryad of the Ilysian Grove":
             return clone.castDryadOfTheIlysianGrove()
         case "Explore":
@@ -155,6 +157,8 @@ func (clone gameState) playHelper(c card) []gameState {
     clone.battlefield = clone.battlefield.Plus(c)
     // Watch out for additional effects, if any
     switch c.name {
+        case "Bojuka Bog":
+            return clone.playBojukaBog()
         case "Forest":
             return clone.playForest()
         case "Simic Growth Chamber":
@@ -182,6 +186,11 @@ func (self *gameState) castArborealGrazer() []gameState {
         ret = append(ret, clone.playTapped(c)...)
     }
     return ret
+}
+
+func (clone gameState) castAzusaLostButSeeking() []gameState {
+    clone.battlefield = clone.battlefield.Plus(Card("Azusa, Lost but Seeking"))
+    return []gameState{clone}
 }
 
 
@@ -216,6 +225,11 @@ func (self *gameState) castSummonersPact() []gameState {
         ret = append(ret, clone)
     }
     return ret
+}
+
+
+func (clone gameState) playBojukaBog() []gameState {
+    return []gameState{clone}
 }
 
 
