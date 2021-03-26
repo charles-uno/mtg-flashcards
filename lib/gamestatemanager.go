@@ -47,9 +47,9 @@ func (self *gameManager) NextSteps() gameManager {
 func (self *gameManager) Pretty() string {
     lines := []string{}
     for _, state := range self.states {
-        lines = append(lines, state.Pretty())
+        lines = append(lines, state.Pretty()[1:])
     }
-    return strings.Join(lines, "\n---\n")
+    return strings.Join(lines, "\n~~~\n")
 }
 
 
