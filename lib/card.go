@@ -47,12 +47,12 @@ func (self *card) EntersTapped() bool {
 type cardData struct {
     // No need to duplicate card metadata over and over. Cache it by card name
     // and look it up as needed.
-    Name string
-    CastingCost mana
-    EntersTapped bool
-    Pretty string
-    Type string
-    TapsFor mana
+    Name string         `yaml:"name"`
+    CastingCost mana    `yaml:"casting_cost"`
+    EntersTapped bool   `yaml:"enters_tapped"`
+    Pretty string       `yaml:"pretty"`
+    Type string         `yaml:"type"`
+    TapsFor mana        `yaml:"taps_for"`
 }
 
 
@@ -63,9 +63,13 @@ var card_cache = make(map[string]cardData)
 func InitCardDataCache() {
     card_data_raw := []cardData{}
     text_bytes, err := ioutil.ReadFile("carddata.yaml")
-    if err != nil { log.Fatal(err) }
+    if err != nil {
+        log.Fatal(err)
+    }
     err = yaml.Unmarshal(text_bytes, &card_data_raw)
-    if err != nil { log.Fatal(err) }
+    if err != nil {
+        log.Fatal(err)
+    }
     log.Println("loaded carddata.yaml")
     for _, cd := range card_data_raw {
         if cd.Pretty == "" {
@@ -73,6 +77,9 @@ func InitCardDataCache() {
         }
         card_cache[cd.Name] = cd
     }
+
+    log.Println(card_cache["Primeval Titan"])
+
 }
 
 
@@ -82,7 +89,9 @@ func GetCardData(card_name string) cardData {
     }
     // If data for a card is missing, we need to stop and add it immediately
     cd, ok := card_cache[card_name]
-    if !ok { log.Fatal("no data for: " + card_name) }
+    if !ok {
+        log.Fatal("no data for: " + card_name)
+    }
     return cd
 }
 

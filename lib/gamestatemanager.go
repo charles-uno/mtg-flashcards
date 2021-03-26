@@ -12,13 +12,17 @@ type gameManager struct {
 }
 
 
-func NewGame(hand []card, library []card, otp bool) gameManager {
+func NewGame(hand_raw []card, library_raw []card, otp bool) gameManager {
+    hand := CardMap(hand_raw)
     state := gameState{
-        hand: CardMap(hand),
+        hand: hand,
         // Empty string is fine for the initial game state
         hash: "",
-        library: CardArray(library),
+        landPlays: 0,
+        library: CardArray(library_raw),
+        log: ";draw " + hand.Pretty(),
         onThePlay: otp,
+        turn: 0,
     }
     return GameManager(state)
 }
@@ -47,7 +51,7 @@ func (self *gameManager) NextSteps() gameManager {
 func (self *gameManager) Pretty() string {
     lines := []string{}
     for _, state := range self.states {
-        lines = append(lines, state.Pretty()[1:])
+        lines = append(lines, state.Pretty())
     }
     return strings.Join(lines, "\n~~~\n")
 }

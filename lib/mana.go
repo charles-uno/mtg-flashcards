@@ -8,8 +8,8 @@ import (
 
 
 type mana struct {
-    Green int
-    Total int
+    Green int   `yaml:"green"`
+    Total int   `yaml:"total"`
 }
 
 

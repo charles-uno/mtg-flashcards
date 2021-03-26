@@ -50,7 +50,7 @@ func (self *gameState) NextSteps() gameManager {
 
 func (clone gameState) passTurn() gameManager {
     clone.turn += 1
-    clone.note("\n--- turn " + strconv.Itoa(clone.turn))
+    clone.note(";--- turn " + strconv.Itoa(clone.turn))
     // Empty mana pool then tap out
     clone.manaPool = mana{}
     for c, n := range clone.battlefield.Items() {
@@ -86,12 +86,13 @@ func (clone gameState) cast(c card) (gameManager, error) {
         return GameManager(), nil
     }
     // Do we have enough mana to cast it?
-    m, err := clone.manaPool.Minus(c.CastingCost())
+    cost := c.CastingCost()
+    m, err := clone.manaPool.Minus(cost)
     if err != nil {
         return GameManager(), nil
     }
     clone.manaPool = m
-    clone.note("\ncast " + c.Pretty())
+    clone.note(";cast " + c.Pretty())
     clone.noteManaPool()
     // Now figure out what it does
     switch c.name {
@@ -119,7 +120,7 @@ func (clone gameState) play(c card) (gameManager, error) {
     } else {
         clone.manaPool = clone.manaPool.Plus(c.TapsFor())
     }
-    clone.note("\nplay " + c.Pretty())
+    clone.note(";play " + c.Pretty())
     clone.noteManaPool()
     // Watch out for additional effects, if any
     switch c.name {
