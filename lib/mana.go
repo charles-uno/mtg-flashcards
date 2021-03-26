@@ -31,11 +31,12 @@ func (self *mana) Plus(other mana) mana {
 
 func (self *mana) Minus(other mana) (mana, error) {
     if self.Green >= other.Green && self.Total >= other.Total {
-        m := mana{
-            Green: self.Green - other.Green,
-            Total: self.Total - other.Total,
+        total := self.Total - other.Total
+        green := self.Green - other.Green
+        if green > total {
+            green = total
         }
-        return m, nil
+        return mana{Green: green, Total: total}, nil
     } else {
         text := "can't subtract " + self.Pretty() + " - " + other.Pretty()
         return mana{}, errors.New(text)

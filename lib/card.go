@@ -79,6 +79,7 @@ func InitCardDataCache() {
     }
 
     log.Println(card_cache["Primeval Titan"])
+    log.Println(card_cache["Forest"])
 
 }
 

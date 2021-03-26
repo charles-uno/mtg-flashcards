@@ -2,7 +2,6 @@ package lib
 
 
 import (
-    "errors"
     "log"
     "strings"
     "strconv"
@@ -27,30 +26,26 @@ type gameState struct {
 }
 
 
-func (self *gameState) NextSteps() gameManager {
-    gm := self.passTurn()
+func (self *gameState) NextStates() []gameState {
+    ret := self.passTurn()
     for c, _ := range self.hand.Items() {
         if c.IsLand() {
-            g, err := self.play(c)
-            if err != nil {
-                log.Fatal(err)
+            for _, state := range self.play(c) {
+                ret = append(ret, state)
             }
-            gm.Update(g)
         } else {
-            g, err := self.cast(c)
-            if err != nil {
-                log.Fatal(err)
+            for _, state := range self.cast(c) {
+                ret = append(ret, state)
             }
-            gm.Update(g)
         }
     }
-    return gm
+    return ret
 }
 
 
-func (clone gameState) passTurn() gameManager {
+func (clone gameState) passTurn() []gameState {
     clone.turn += 1
-    clone.note(";--- turn " + strconv.Itoa(clone.turn))
+    clone.note("\n--- turn " + strconv.Itoa(clone.turn))
     // Empty mana pool then tap out
     clone.manaPool = mana{}
     for c, n := range clone.battlefield.Items() {
@@ -65,52 +60,57 @@ func (clone gameState) passTurn() gameManager {
         clone.battlefield.Count(Card("Sakura-Tribe Scout")) +
         2*clone.battlefield.Count(Card("Azusa, Lost but Seeking"))
     if clone.turn > 1 || !clone.onThePlay {
-        return clone.Draw(1)
+        return clone.draw(1)
     } else {
-        return GameManager(clone)
+        return []gameState{clone}
     }
 }
 
 
-func (clone gameState) Draw(n int) gameManager {
+func (clone gameState) draw(n int) []gameState {
     popped, library := clone.library.SplitAfter(n)
     clone.library = library
     clone.hand = clone.hand.Plus(popped...)
-    return GameManager(clone)
+
+    popped_map := CardMap(popped)
+    clone.note(", draw " + popped_map.Pretty())
+
+    return []gameState{clone}
 }
 
 
-func (clone gameState) cast(c card) (gameManager, error) {
+func (clone gameState) cast(c card) []gameState {
     // Is this spell in our hand?
     if clone.hand.Count(c) == 0 {
-        return GameManager(), nil
+        return []gameState{}
     }
     // Do we have enough mana to cast it?
     cost := c.CastingCost()
     m, err := clone.manaPool.Minus(cost)
     if err != nil {
-        return GameManager(), nil
+        return []gameState{}
     }
     clone.manaPool = m
-    clone.note(";cast " + c.Pretty())
+    clone.note("\ncast " + c.Pretty())
     clone.noteManaPool()
     // Now figure out what it does
     switch c.name {
         case "Primeval Titan":
-            return clone.castPrimevalTitan(), nil
+            return clone.castPrimevalTitan()
     }
-    return GameManager(), errors.New("not sure how to cast: " + c.name)
+    log.Fatal("not sure how to cast: " + c.name)
+    return []gameState{}
 }
 
 
-func (clone gameState) play(c card) (gameManager, error) {
+func (clone gameState) play(c card) []gameState {
     // Is this land in our hand?
     if clone.hand.Count(c) == 0 {
-        return GameManager(), nil
+        return []gameState{}
     }
     // Do we have at least one land play remaining?
     if clone.landPlays <= 0 {
-        return GameManager(), nil
+        return []gameState{}
     }
     // Tap out immediately
     if c.EntersTapped() {
@@ -120,25 +120,28 @@ func (clone gameState) play(c card) (gameManager, error) {
     } else {
         clone.manaPool = clone.manaPool.Plus(c.TapsFor())
     }
-    clone.note(";play " + c.Pretty())
+    clone.note("\nplay " + c.Pretty())
     clone.noteManaPool()
+    clone.landPlays -= 1
+    clone.battlefield = clone.battlefield.Plus(c)
     // Watch out for additional effects, if any
     switch c.name {
         case "Forest":
-            return clone.playForest(), nil
+            return clone.playForest()
     }
-    return GameManager(), errors.New("not sure how to play: " + c.name)
+    log.Fatal("not sure how to play: " + c.name)
+    return []gameState{}
 }
 
 
-func (clone gameState) castPrimevalTitan() gameManager {
+func (clone gameState) castPrimevalTitan() []gameState {
     clone.done = true
-    return GameManager(clone)
+    return []gameState{clone}
 }
 
 
-func (clone gameState) playForest() gameManager {
-    return GameManager(clone)
+func (clone gameState) playForest() []gameState {
+    return []gameState{clone}
 }
 
 
@@ -157,17 +160,17 @@ func (self *gameState) noteManaPool() {
 }
 
 
-
-func (gs *gameState) Hash() string {
+func (state *gameState) Hash() string {
     // We don't care about order for battlefield or hand, but we do care about
     // the order of the library
     return strings.Join(
         []string{
-            gs.hand.Pretty(),
-            gs.battlefield.Pretty(),
-            gs.manaPool.Pretty(),
-            strconv.FormatBool(gs.done),
-            gs.library.Pretty(),
+            state.hand.Pretty(),
+            state.battlefield.Pretty(),
+            state.manaPool.Pretty(),
+            strconv.FormatBool(state.done),
+            strconv.Itoa(state.landPlays),
+            state.library.Pretty(),
         },
         ";",
     )

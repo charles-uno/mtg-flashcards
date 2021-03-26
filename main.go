@@ -24,10 +24,11 @@ func main() {
     game := lib.NewGame(hand, library, onThePlay)
     fmt.Println(game.Pretty())
 
-    fmt.Println("NEXT STEPS")
-    game = game.NextSteps()
-    fmt.Println(game.Pretty())
-
+    for turn := 0; turn < 7; turn++ {
+        fmt.Println("\nNEXT TURN\n")
+        game = game.NextTurn()
+        fmt.Println(game.Pretty())
+    }
 }
 
 
