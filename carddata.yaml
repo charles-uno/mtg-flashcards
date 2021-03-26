@@ -1,3 +1,8 @@
+- name: Amulet of Vigor
+  casting_cost:
+    green: 0
+    total: 1
+  type: artifact
 - name: Arboreal Grazer
   casting_cost:
     green: 1

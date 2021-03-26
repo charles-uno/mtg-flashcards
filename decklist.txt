@@ -1,6 +1,6 @@
-10 Primeval Titan
-20 Explore
-30 Forest
-
-# Simic Growth Chamber
-# Arboreal Grazer
+8 Amulet of Vigor
+8 Primeval Titan
+8 Explore
+8 Arboreal Grazer
+14 Forest
+14 Simic Growth Chamber

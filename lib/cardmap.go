@@ -68,10 +68,14 @@ func (self *cardMap) Minus(cards ...card) cardMap {
         counts[c] = n
     }
     for _, c := range cards {
-        if counts[c] > 1 {
+        if counts[c] > 0 {
             counts[c] -= 1
         } else {
-            log.Fatal("can't pop " + c.Pretty() + " from " + self.Pretty())
+            log.Fatal("can't pop ", c, " from ", counts)
+        }
+        // Don't leave keys sitting around with zero value
+        if counts[c] == 0 {
+            delete(counts, c)
         }
     }
     return cardMap{counts: counts}

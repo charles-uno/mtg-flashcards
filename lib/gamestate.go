@@ -80,9 +80,14 @@ func (clone gameState) cast(c card) []gameState {
     }
     clone.manaPool = m
     clone.note("\ncast " + c.Pretty())
+    clone.hand = clone.hand.Minus(c)
     clone.noteManaPool()
     // Now figure out what it does
     switch c.name {
+        case "Amulet of Vigor":
+            return clone.castAmuletOfVigor()
+        case "Arboreal Grazer":
+            return clone.castArborealGrazer()
         case "Explore":
             return clone.castExplore()
         case "Primeval Titan":
@@ -102,25 +107,72 @@ func (clone gameState) play(c card) []gameState {
     if clone.landPlays <= 0 {
         return []gameState{}
     }
-    // Tap out immediately
-    if c.EntersTapped() {
-        nAmulets := clone.battlefield.Count(Card("Amulet of Vigor"))
-        m := c.TapsFor()
-        clone.manaPool = clone.manaPool.Plus(m.Times(nAmulets))
-    } else {
-        clone.manaPool = clone.manaPool.Plus(c.TapsFor())
-    }
-    clone.note("\nplay " + c.Pretty())
-    clone.noteManaPool()
     clone.landPlays -= 1
+    clone.note("\nplay " + c.Pretty())
+    if c.EntersTapped() {
+        return clone.playTapped(c)
+    } else {
+        return clone.playUntapped(c)
+    }
+}
+
+
+func (clone gameState) playTapped(c card) []gameState {
+    nAmulets := clone.battlefield.Count(Card("Amulet of Vigor"))
+    m := c.TapsFor()
+    for i := 0; i < nAmulets; i++ {
+        clone.manaPool = clone.manaPool.Plus(m)
+        clone.noteManaPool()
+    }
+    return clone.playHelper(c)
+}
+
+
+func (clone gameState) playUntapped(c card) []gameState {
+    clone.manaPool = clone.manaPool.Plus(c.TapsFor())
+    clone.noteManaPool()
+    return clone.playHelper(c)
+}
+
+
+func (clone gameState) playHelper(c card) []gameState {
+    clone.hand = clone.hand.Minus(c)
     clone.battlefield = clone.battlefield.Plus(c)
     // Watch out for additional effects, if any
     switch c.name {
         case "Forest":
             return clone.playForest()
+        case "Simic Growth Chamber":
+            return clone.playSimicGrowthChamber()
     }
     log.Fatal("not sure how to play: " + c.name)
     return []gameState{}
+}
+
+
+func (clone gameState) castAmuletOfVigor() []gameState {
+    clone.battlefield = clone.battlefield.Plus(Card("Amulet of Vigor"))
+    return []gameState{clone}
+}
+
+
+func (self *gameState) castArborealGrazer() []gameState {
+    ret := []gameState{}
+    for c, _ := range self.hand.Items() {
+        if !c.IsLand() {
+            continue
+        }
+        clone := self.clone()
+        clone.note(", play " + c.Pretty())
+        ret = append(ret, clone.playTapped(c)...)
+    }
+    return ret
+}
+
+
+func (clone gameState) castExplore() []gameState {
+    clone.landPlays += 1
+    return clone.draw(1)
 }
 
 
@@ -130,14 +182,24 @@ func (clone gameState) castPrimevalTitan() []gameState {
 }
 
 
-func (clone gameState) castExplore() []gameState {
-    clone.landDrops += 1
-    return clone.draw(1)
+func (clone gameState) playForest() []gameState {
+    return []gameState{clone}
 }
 
 
-func (clone gameState) playForest() []gameState {
-    return []gameState{clone}
+func (self *gameState) playSimicGrowthChamber() []gameState {
+    ret := []gameState{}
+    for c, _ := range self.battlefield.Items() {
+        if !c.IsLand() {
+            continue
+        }
+        clone := self.clone()
+        clone.battlefield = clone.battlefield.Minus(c)
+        clone.hand = clone.hand.Plus(c)
+        clone.note(", bounce " + c.Pretty())
+        ret = append(ret, clone)
+    }
+    return ret
 }
 
 
@@ -146,14 +208,17 @@ func (gs *gameState) Pretty() string {
 }
 
 
+func (clone gameState) clone() gameState {
+    return clone
+}
+
+
 func (clone gameState) draw(n int) []gameState {
     popped, library := clone.library.SplitAfter(n)
     clone.library = library
     clone.hand = clone.hand.Plus(popped...)
-
     popped_map := CardMap(popped)
     clone.note(", draw " + popped_map.Pretty())
-
     return []gameState{clone}
 }
 
@@ -164,7 +229,9 @@ func (self *gameState) note(s string) {
 
 
 func (self *gameState) noteManaPool() {
-    self.log += ", " + self.manaPool.Pretty() + " in pool"
+    if self.manaPool.Total > 0 {
+        self.log += ", " + self.manaPool.Pretty() + " in pool"
+    }
 }
 
 

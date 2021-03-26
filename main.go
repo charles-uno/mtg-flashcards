@@ -20,15 +20,13 @@ func main() {
     hand, library := deck[:7], deck[7:]
     onThePlay := flip()
 
-    fmt.Println("NEW GAME")
     game := lib.NewGame(hand, library, onThePlay)
+
+    for game.IsNotDone() {
+        game = game.NextTurn()
+    }
     fmt.Println(game.Pretty())
 
-    for turn := 0; turn < 7; turn++ {
-        fmt.Println("\nNEXT TURN\n")
-        game = game.NextTurn()
-        fmt.Println(game.Pretty())
-    }
 }
 
 

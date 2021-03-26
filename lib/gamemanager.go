@@ -48,13 +48,8 @@ func GameManager(states ...gameState) gameManager {
 }
 
 
-
-
-
-
-
 func (self *gameManager) NextTurn() gameManager {
-    if self.Size() == 0 {
+    if self.size() == 0 {
         log.Fatal("called NextTurn on empty gameManager")
     }
     // Once we find a line, we're done iterating
@@ -62,7 +57,7 @@ func (self *gameManager) NextTurn() gameManager {
         return *self
     }
     ret := GameManager()
-    for self.Size() > 0 {
+    for self.size() > 0 {
         state_old := self.Pop()
         for _, state_new := range state_old.NextStates() {
             // If we find a state that gets there, we're done
@@ -107,8 +102,13 @@ func (self *gameManager) Pop() gameState {
 }
 
 
-func (self *gameManager) Size() int {
+func (self *gameManager) size() int {
     return len(self.states)
+}
+
+
+func (self *gameManager) IsNotDone() bool {
+    return !self.done
 }
 
 
