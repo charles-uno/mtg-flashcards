@@ -343,7 +343,8 @@ func (clone gameState) draw(n int) []gameState {
     popped, library := clone.library.SplitAfter(n)
     clone.library = library
     clone.hand = clone.hand.Plus(popped...)
-    clone.exportText(", draw ")
+    // Exporting a card map already throws an extra space in there
+    clone.exportText(", draw")
     clone.exportCardMap(CardMap(popped))
     return []gameState{clone}
 }
@@ -358,7 +359,6 @@ func (self *gameState) refreshExport() {
 }
 
 
-
 func (self *gameState) exportBreak() {
     self.refreshExport()
     s := span{Type: "break", Text: ""}
@@ -370,7 +370,9 @@ func (self *gameState) exportBreak() {
 func (self *gameState) exportManaPool() {
     self.refreshExport()
     if self.manaPool.Total > 0 {
-        self.exportText(", " + self.manaPool.Pretty() + " in pool")
+        self.exportText(", ")
+        self.exportMana(self.manaPool)
+        self.exportText(" in pool")
     }
 }
 
@@ -390,6 +392,13 @@ func (self *gameState) exportCard(c card) {
 }
 
 
+func (self *gameState) exportMana(m mana) {
+    self.refreshExport()
+    self.toExport = append(self.toExport, m.Export())
+    self.note(m.Pretty())
+}
+
+
 func (self *gameState) exportCardMap(cm cardMap) {
     self.refreshExport()
     for _, s := range cm.Export() {
@@ -406,8 +415,12 @@ func (self *gameState) Export() string {
             ret += s.Text
         } else if s.Type == "break" {
             ret += "\n"
-        } else {
+        } else if s.Type == "mana" {
             ret += "{" + s.Text + "}"
+        } else if s.Type == "card" {
+            ret += "[" + s.Text + "]"
+        } else {
+            log.Fatal("not sure how to export type", s.Type)
         }
     }
     return ret

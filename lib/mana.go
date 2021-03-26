@@ -55,6 +55,10 @@ func (m *mana) Pretty() string {
     return s
 }
 
+func (self *mana) Export() span {
+    return span{Type: "mana", Text: self.Pretty()}
+}
+
 
 func Mana(s string) mana {
     green := 0
