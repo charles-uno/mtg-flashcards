@@ -32,9 +32,9 @@ func NewGame(hand_raw []card, library_raw []card, otp bool) gameManager {
         onThePlay: otp,
         turn: 0,
     }
-    state.exportBreak()
-    state.exportText(play_order + ", opening hand: ")
-    state.exportCardMap(hand)
+    state.logBreak()
+    state.logText(play_order + ", opening hand: ")
+    state.logCardMap(hand)
     return GameManager(state)
 }
 
@@ -86,10 +86,10 @@ func (self *gameManager) Pretty() string {
 }
 
 
-func (self *gameManager) Export() string {
+func (self *gameManager) ToJSON() string {
     lines := []string{}
     for _, state := range self.states {
-        lines = append(lines, state.Export())
+        lines = append(lines, state.ToJSON())
     }
     return strings.Join(lines, "\n~~~\n")
 }

@@ -5,7 +5,6 @@ import (
     "gopkg.in/yaml.v2"
     "io/ioutil"
     "log"
-    "strings"
 )
 
 
@@ -24,8 +23,14 @@ func (self *card) Pretty() string {
 }
 
 
-func (self *card) Export() span {
-    return span{Type: "card", Text: self.name}
+func (self *card) ToJSON() string {
+    var t tag
+    if self.IsLand() {
+        t = Tag("land", self.name)
+    } else {
+        t = Tag("spell", self.name)
+    }
+    return t.ToJSON()
 }
 
 
@@ -47,6 +52,12 @@ func (self *card) IsLand() bool {
 func (self *card) IsCreature() bool {
     return GetCardData(self.name).Type == "creature"
 }
+
+
+func (self *card) IsColorless() bool {
+    return GetCardData(self.name).Type == "land" || self.name == "Amulet of Vigor"
+}
+
 
 func (self *card) HasAbility() bool {
     return GetCardData(self.name).ActivationCost.Total != 0
@@ -114,12 +125,4 @@ func GetCardData(card_name string) cardData {
         log.Fatal("no data for: " + card_name)
     }
     return cd
-}
-
-
-func slug(s string) string {
-    for _, c := range []string{" ", "-", "'", ","} {
-        s = strings.ReplaceAll(s, c, "")
-    }
-    return s
 }

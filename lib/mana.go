@@ -55,8 +55,9 @@ func (m *mana) Pretty() string {
     return s
 }
 
-func (self *mana) Export() span {
-    return span{Type: "mana", Text: self.Pretty()}
+func (self *mana) ToJSON() string {
+    t := Tag("mana", self.Pretty())
+    return t.ToJSON()
 }
 
 

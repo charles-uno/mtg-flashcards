@@ -32,10 +32,9 @@ func main() {
     }
 
     fmt.Println("\n\n")
-    fmt.Println(game.Pretty())
-
+    fmt.Println(game.ToJSON())
     fmt.Println("\n\n")
-    fmt.Println(game.Export())
+    fmt.Println(game.Pretty())
 
 }
 
