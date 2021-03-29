@@ -28,12 +28,11 @@ func main() {
             log.Println("starting turn", game.Turn, "with", game.Size(), "states")
         }
         game = game.NextTurn()
-
     }
 
-    fmt.Println("\n")
+    fmt.Println("")
     fmt.Println(game.ToJSON())
-    fmt.Println("\n")
+    fmt.Println("")
     fmt.Println(game.Pretty())
 
 }

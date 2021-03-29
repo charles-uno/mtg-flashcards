@@ -7,6 +7,9 @@ import (
 )
 
 
+var maxTurns = 4
+
+
 type gameManager struct {
     // Use a map to imitate a Python-style set of game states
     states map[string]gameState
@@ -72,6 +75,20 @@ func (self *gameManager) NextTurn() gameManager {
                 ret.Add(state_new)
             }
         }
+    }
+    // After turn four or so, further work is expensive but not interesting.
+    // Pop off the longest log we can find to show we tried.
+    if ret.Turn > maxTurns {
+        log.Println("giving up on turn", ret.Turn)
+        bestState := ret.Pop()
+        for ret.Size() > 0 {
+            state := ret.Pop()
+            if state.LogSize() > bestState.LogSize() {
+                bestState = state
+            }
+        }
+        bestState.GiveUp()
+        return GameManager(bestState)
     }
     return ret
 }

@@ -29,11 +29,6 @@ type gameState struct {
 
 func (self *gameState) NextStates() []gameState {
     ret := self.passTurn()
-
-    // If we have 6 mana, no need to accumulate more
-
-    // If we have plenty of mana but no Titan, don't bother with Grazer, etc
-
     for c, _ := range self.hand.Items() {
         if c.IsLand() {
             for _, state := range self.play(c) {
@@ -56,8 +51,9 @@ func (self *gameState) NextStates() []gameState {
 }
 
 
-
-
+func (clone gameState) clone() gameState {
+    return clone
+}
 
 
 func (clone gameState) passTurn() []gameState {
@@ -372,11 +368,6 @@ func (self *gameState) playSimicGrowthChamber() []gameState {
 }
 
 
-func (clone gameState) clone() gameState {
-    return clone
-}
-
-
 func (clone gameState) draw(n int) []gameState {
     popped, library := clone.library.SplitAfter(n)
     clone.library = library
@@ -441,16 +432,28 @@ func (self *gameState) logCardMap(cm cardMap) {
 }
 
 
+func (self *gameState) GiveUp() {
+    self.done = true
+    self.logBreak()
+    self.logText("giving up!")
+}
+
+
 func (self *gameState) ToJSON() string {
+    self.resolveCache()
     // Pull off the last trailing comma so we have a valid JSON list of objects
     return "[" + self.jsonLog[:len(self.jsonLog)-1] + "]"
+}
+
+
+func (self *gameState) LogSize() int {
+    return len(self.jsonLog)
 }
 
 
 func (self *gameState) Pretty() string {
     return PrettyJSON(self.ToJSON())
 }
-
 
 
 func (state *gameState) Hash() string {

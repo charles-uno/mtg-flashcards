@@ -108,10 +108,6 @@ func InitCardDataCache() {
         }
         card_cache[cd.Name] = cd
     }
-
-    log.Println(card_cache["Primeval Titan"])
-    log.Println(card_cache["Forest"])
-
 }
 
 
