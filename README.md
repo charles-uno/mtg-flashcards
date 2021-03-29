@@ -27,6 +27,16 @@ The service supports two endpoints on port 5001:
   - `success`, indicating whether it was able to cast Primeval Titan by turn four
   - `plays`, a list of maps which describe the computer's sequence of plays over the first few turns of the game. The intention is that these maps can be turned into HTML, complete with formatting for card and mana elements
 
+For a minimal end-to-end run, launch the server in one shell then in another run:
+
+```
+curl localhost:5001/api/hand > data.json
+curl localhost:5001/api/play -d @data.json
+```
+
+The first line gets an opening hand and dumps it into a file. The second sends back the contents of that file to see the server play it out. Notably, the deck is shuffled every time, so the second command can be given repeatedly to see how the games play out depending on what's drawn.
+
+
 ## Limitations of the Model
 
 The model present here is pretty stripped-down in the interest of performance. For example, it only handles green mana. Adding blue mana into the mix is computationally demanding, and Tolaria West just doesn't matter that often in the first few turns of the game.
