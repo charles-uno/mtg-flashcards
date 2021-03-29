@@ -29,4 +29,4 @@ The service supports two endpoints on port 5001:
 
 ## Limitations of the Model
 
-The model present here is pretty stripped-down in the interest of performance. For example, it only handles green mana, so it ignores the possibility of transmuting Tolaria West. Dealing with multiple colors of mana is computationally expensive, and it hardly ever matters in the first few turns of the game.
+The model present here is pretty stripped-down in the interest of performance. For example, it only handles green mana. Adding blue mana into the mix is computationally demanding, and Tolaria West just doesn't matter that often in the first few turns of the game.
