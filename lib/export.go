@@ -8,6 +8,12 @@ import (
 )
 
 
+type report struct {
+    Success bool `json:"success"`
+    Plays []tag  `json:"plays"`
+}
+
+
 type tag struct {
     Type string `json:"type"`
     Text string `json:"text"`
@@ -25,18 +31,17 @@ func (self *tag) ToJSON() string {
         log.Fatal("failed to marshal:", self)
     }
     return string(b)
-//    return "{\"type\": \"" + self.Type + "\", \"text\": \"" + self.Text + "\"}"
 }
 
 
 func PrettyJSON(s string) string {
-    tags := []tag{}
-    err := json.Unmarshal([]byte(s), &tags)
+    rep := report{}
+    err := json.Unmarshal([]byte(s), &rep)
     if err != nil {
         log.Fatal("failed to unmarshal:", s)
     }
     ret := ""
-    for _, t := range tags {
+    for _, t := range rep.Plays {
         if t.Type == "text" {
             ret += t.Text
         } else if t.Type == "break" {
@@ -50,6 +55,11 @@ func PrettyJSON(s string) string {
         } else {
             log.Fatal("not sure how to export type", t.Type)
         }
+    }
+    if rep.Success {
+        ret += "\nSUCCESS"
+    } else {
+        ret += "\nFAILURE"
     }
     return ret
 }

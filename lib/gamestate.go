@@ -14,6 +14,7 @@ import (
 type gameState struct {
     battlefield cardMap
     done bool
+    success bool
     hand cardMap
     hash string
     landPlays int
@@ -134,7 +135,9 @@ func (clone gameState) cast(c card) []gameState {
     clone.logText("cast ")
     clone.logCard(c)
     clone.hand = clone.hand.Minus(c)
-    clone.logManaPool()
+    if c.name != "Primeval Titan" {
+        clone.logManaPool()
+    }
     // Now figure out what it does
     switch c.name {
         case "Adventurous Impulse":
@@ -317,6 +320,7 @@ func (clone gameState) castExplore() []gameState {
 
 func (clone gameState) castPrimevalTitan() []gameState {
     clone.done = true
+    clone.success = true
     return []gameState{clone}
 }
 
@@ -441,6 +445,7 @@ func (self *gameState) logCardMap(cm cardMap) {
 
 func (self *gameState) GiveUp() {
     self.done = true
+    self.success = false
     self.logBreak()
     self.logText("giving up!")
 }
@@ -449,7 +454,8 @@ func (self *gameState) GiveUp() {
 func (self *gameState) ToJSON() string {
     self.resolveCache()
     // Pull off the last trailing comma so we have a valid JSON list of objects
-    return "[" + self.jsonLog[:len(self.jsonLog)-1] + "]"
+    return "{\"success\": " + strconv.FormatBool(self.success) + ", " +
+        "\"plays\": [" + self.jsonLog[:len(self.jsonLog)-1] + "]}\n"
 }
 
 
@@ -472,6 +478,7 @@ func (state *gameState) Hash() string {
             state.battlefield.Pretty(),
             state.manaPool.Pretty(),
             strconv.FormatBool(state.done),
+            strconv.FormatBool(state.success),
             strconv.Itoa(state.landPlays),
             state.library.Pretty(),
         },

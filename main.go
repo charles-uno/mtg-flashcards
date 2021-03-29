@@ -1,40 +1,66 @@
 package main
 
 import (
+    "encoding/json"
     "fmt"
     "log"
     "math/rand"
+    "net/http"
     "time"
 
     "github.com/charles-uno/mtgserver/lib"
 )
 
 
-// Note: we want to be able to run multiple models for the same opening hand.
-// That'll be easier if we send the hand and the library into the game state
-// constructor separately. Rather than, say, passing in a list of 60 cards and
-// having the constructor shuffle and draw.
+type openingHand struct {
+    Hand        []string    `json:"hand"`
+    Library     []string    `json:"library"`
+    OnThePlay   bool        `json:"on_the_play"`
+}
 
-func main() {
 
+func handleOpeningHand(w http.ResponseWriter, r *http.Request) {
+    log.Println("endpoint hit: /api/hand")
     deck := lib.LoadDeck()
-    hand, library := deck[:7], deck[7:]
-    onThePlay := flip()
+    oh := openingHand{
+        Hand: deck[:7],
+        Library: deck[7:],
+        OnThePlay: flip(),
+    }
+    json.NewEncoder(w).Encode(oh)
+}
 
-    game := lib.NewGame(hand, library, onThePlay)
 
+func handleSequencing(w http.ResponseWriter, r *http.Request) {
+    oh := openingHand{}
+    err := json.NewDecoder(r.Body).Decode(&oh)
+    if err != nil {
+        reply := map[string]string{"error": err.Error()}
+        b, _ := json.Marshal(reply)
+        http.Error(w, string(b), http.StatusBadRequest)
+        log.Println("bad payload at /api/play")
+        return
+    }
+    game := lib.NewGame(oh.Hand, lib.Shuffled(oh.Library), oh.OnThePlay)
     for game.IsNotDone() {
-        if game.Turn > 0 {
-            log.Println("starting turn", game.Turn, "with", game.Size(), "states")
-        }
         game = game.NextTurn()
     }
-
-    fmt.Println("")
-    fmt.Println(game.ToJSON())
-    fmt.Println("")
+    fmt.Fprintf(w, game.ToJSON())
+    log.Println("done with calculation at /api/play")
     fmt.Println(game.Pretty())
+}
 
+
+func handleRequests() {
+    http.HandleFunc("/api/hand", handleOpeningHand)
+    http.HandleFunc("/api/play", handleSequencing)
+    log.Fatal(http.ListenAndServe(":5001", nil))
+}
+
+
+func main() {
+    log.Println("launching service")
+    handleRequests()
 }
 
 

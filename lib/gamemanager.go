@@ -18,8 +18,16 @@ type gameManager struct {
 }
 
 
-func NewGame(hand_raw []card, library_raw []card, otp bool) gameManager {
-    hand := CardMap(hand_raw)
+func NewGame(hand_raw []string, library_raw []string, otp bool) gameManager {
+    hand_cards := []card{}
+    for _, c := range hand_raw {
+        hand_cards = append(hand_cards, Card(c))
+    }
+    library_cards := []card{}
+    for _, c := range library_raw {
+        library_cards = append(library_cards, Card(c))
+    }
+    hand := CardMap(hand_cards)
     var play_order string
     if otp {
         play_order = "on the play"
@@ -31,7 +39,7 @@ func NewGame(hand_raw []card, library_raw []card, otp bool) gameManager {
         // Empty string is fine for the initial game state
         hash: "",
         landPlays: 0,
-        library: CardArray(library_raw),
+        library: CardArray(library_cards),
         onThePlay: otp,
         turn: 0,
     }
