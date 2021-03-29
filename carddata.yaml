@@ -65,3 +65,9 @@
     green: 0
     total: 0
   type: instant
+- name: Wastes
+  type: land
+  taps_for:
+    green: 0
+    total: 1
+  enters_tapped: false

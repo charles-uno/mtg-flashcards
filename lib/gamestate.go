@@ -220,6 +220,8 @@ func (clone gameState) playHelper(c card) []gameState {
             return clone.playForest()
         case "Simic Growth Chamber":
             return clone.playSimicGrowthChamber()
+        case "Wastes":
+            return clone.playWastes()
     }
     log.Fatal("not sure how to play: " + c.name)
     return []gameState{}
@@ -347,6 +349,11 @@ func (clone gameState) playCastleGarenbrig() []gameState {
 
 
 func (clone gameState) playForest() []gameState {
+    return []gameState{clone}
+}
+
+
+func (clone gameState) playWastes() []gameState {
     return []gameState{clone}
 }
 

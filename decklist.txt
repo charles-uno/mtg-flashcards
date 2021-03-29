@@ -6,7 +6,8 @@
 4 Primeval Titan
 4 Summoner's Pact
 
-8 Bojuka Bog
+6 Bojuka Bog
+4 Castle Garenbrig
 8 Forest
 8 Simic Growth Chamber
-8 Castle Garenbrig
+6 Wastes
