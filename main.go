@@ -9,6 +9,8 @@ import (
     "time"
 
     "github.com/charles-uno/mtgserver/lib"
+    "github.com/gorilla/handlers"
+    "github.com/gorilla/mux"
 )
 
 
@@ -20,6 +22,7 @@ type openingHand struct {
 
 
 func handleOpeningHand(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
     log.Println("endpoint hit: /api/hand")
     deck := lib.LoadDeck()
     oh := openingHand{
@@ -32,6 +35,7 @@ func handleOpeningHand(w http.ResponseWriter, r *http.Request) {
 
 
 func handleSequencing(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
     oh := openingHand{}
     err := json.NewDecoder(r.Body).Decode(&oh)
     if err != nil {
@@ -51,16 +55,13 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func handleRequests() {
-    http.HandleFunc("/api/hand", handleOpeningHand)
-    http.HandleFunc("/api/play", handleSequencing)
-    log.Fatal(http.ListenAndServe(":5001", nil))
-}
-
-
 func main() {
     log.Println("launching service")
-    handleRequests()
+    router := mux.NewRouter()
+    router.HandleFunc("/api/hand", handleOpeningHand).Methods("GET")
+    router.HandleFunc("/api/play", handleSequencing).Methods("POST")
+    cors := handlers.AllowedOrigins([]string{"*"})
+    log.Fatal(http.ListenAndServe(":5001", handlers.CORS(cors)(router)))
 }
 
 
