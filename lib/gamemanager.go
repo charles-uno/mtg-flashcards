@@ -18,35 +18,45 @@ type gameManager struct {
 }
 
 
-func NewGame(hand_raw []string, library_raw []string, otp bool) gameManager {
-    hand_cards := []card{}
-    for _, c := range hand_raw {
-        hand_cards = append(hand_cards, Card(c))
+func NewGame(handRaw []string, libraryRaw []string, otp bool) (gameManager, error) {
+
+    log.Println("GOT TO HERE")
+
+    allCardNames := []string{}
+    handCards := []card{}
+    for _, cardName := range handRaw {
+        handCards = append(handCards, Card(cardName))
+        allCardNames = append(allCardNames, cardName)
     }
-    library_cards := []card{}
-    for _, c := range library_raw {
-        library_cards = append(library_cards, Card(c))
+    libraryCards := []card{}
+    for _, cardName := range libraryRaw {
+        libraryCards = append(libraryCards, Card(cardName))
+        allCardNames = append(allCardNames, cardName)
     }
-    hand := CardMap(hand_cards)
-    var play_order string
+    err := EnsureCardData(allCardNames)
+    if err != nil {
+        return gameManager{}, err
+    }
+    hand := CardMap(handCards)
+    var playOrder string
     if otp {
-        play_order = "on the play"
+        playOrder = "on the play"
     } else {
-        play_order = "on the draw"
+        playOrder = "on the draw"
     }
     state := gameState{
         hand: hand,
         // Empty string is fine for the initial game state
         hash: "",
         landPlays: 0,
-        library: CardArray(library_cards),
+        library: CardArray(libraryCards),
         onThePlay: otp,
         turn: 0,
     }
     state.logBreak()
-    state.logText(play_order + ", opening hand: ")
+    state.logText(playOrder + ", opening hand: ")
     state.logCardMap(hand)
-    return GameManager(state)
+    return GameManager(state), nil
 }
 
 

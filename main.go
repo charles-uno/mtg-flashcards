@@ -9,8 +9,7 @@ import (
     "time"
 
     "github.com/charles-uno/mtgserver/lib"
-    "github.com/gorilla/handlers"
-    "github.com/gorilla/mux"
+    "github.com/rs/cors"
 )
 
 
@@ -22,20 +21,25 @@ type openingHand struct {
 
 
 func handleOpeningHand(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-    log.Println("endpoint hit: /api/hand")
-    deck := lib.LoadDeck()
+    deck, err := lib.LoadDeck()
+    if err != nil {
+        reply := map[string]string{"error": err.Error()}
+        b, _ := json.Marshal(reply)
+        http.Error(w, string(b), http.StatusInternalServerError)
+        log.Println("failed to load deck at /api/hand")
+        return
+    }
     oh := openingHand{
         Hand: deck[:7],
         Library: deck[7:],
         OnThePlay: flip(),
     }
+    log.Println("endpoint hit: /api/hand")
     json.NewEncoder(w).Encode(oh)
 }
 
 
 func handleSequencing(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
     oh := openingHand{}
     err := json.NewDecoder(r.Body).Decode(&oh)
     if err != nil {
@@ -45,7 +49,15 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
         log.Println("bad payload at /api/play")
         return
     }
-    game := lib.NewGame(oh.Hand, lib.Shuffled(oh.Library), oh.OnThePlay)
+    game, err := lib.NewGame(oh.Hand, lib.Shuffled(oh.Library), oh.OnThePlay)
+    if err != nil {
+        reply := map[string]string{"error": err.Error()}
+        b, _ := json.Marshal(reply)
+        http.Error(w, string(b), http.StatusInternalServerError)
+        log.Println("failed to start game at /api/play")
+        return
+    }
+    // Iterate through the turns
     for game.IsNotDone() {
         game = game.NextTurn()
     }
@@ -57,11 +69,13 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
 
 func main() {
     log.Println("launching service")
-    router := mux.NewRouter()
-    router.HandleFunc("/api/hand", handleOpeningHand).Methods("GET")
-    router.HandleFunc("/api/play", handleSequencing).Methods("POST")
-    cors := handlers.AllowedOrigins([]string{"*"})
-    log.Fatal(http.ListenAndServe(":5001", handlers.CORS(cors)(router)))
+    mux := http.NewServeMux()
+    mux.HandleFunc("/api/hand", handleOpeningHand)
+    mux.HandleFunc("/api/play", handleSequencing)
+    // Default CORS handler allows GET and POST from anywhere. To go back to
+    // default settings, lose the handler and use nil instead
+    handler := cors.Default().Handler(mux)
+    log.Fatal(http.ListenAndServe(":5001", handler))
 }
 
 

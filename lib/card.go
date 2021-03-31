@@ -2,6 +2,7 @@ package lib
 
 
 import (
+    "errors"
     "gopkg.in/yaml.v2"
     "io/ioutil"
     "log"
@@ -88,37 +89,46 @@ type cardData struct {
 
 
 // Cache card data by name so we don't re-read the file repeatedly
-var card_cache = make(map[string]cardData)
+var cardCache = make(map[string]cardData)
 
 
 func InitCardDataCache() {
-    card_data_raw := []cardData{}
-    text_bytes, err := ioutil.ReadFile("carddata.yaml")
+    cardDataRaw := []cardData{}
+    textBytes, err := ioutil.ReadFile("carddata.yaml")
     if err != nil {
         log.Fatal(err)
     }
-    err = yaml.Unmarshal(text_bytes, &card_data_raw)
+    err = yaml.Unmarshal(textBytes, &cardDataRaw)
     if err != nil {
         log.Fatal(err)
     }
     log.Println("loaded carddata.yaml")
-    for _, cd := range card_data_raw {
+    for _, cd := range cardDataRaw {
         if cd.Pretty == "" {
             cd.Pretty = slug(cd.Name)
         }
-        card_cache[cd.Name] = cd
+        cardCache[cd.Name] = cd
     }
 }
 
 
-func GetCardData(card_name string) cardData {
-    if len(card_cache) == 0 {
+func GetCardData(cardName string) cardData {
+    if len(cardCache) == 0 {
         InitCardDataCache()
     }
-    // If data for a card is missing, we need to stop and add it immediately
-    cd, ok := card_cache[card_name]
-    if !ok {
-        log.Fatal("no data for: " + card_name)
+    return cardCache[cardName]
+}
+
+
+func EnsureCardData(cardNames []string) error {
+    if len(cardCache) == 0 {
+        InitCardDataCache()
     }
-    return cd
+    for _, cardName := range cardNames {
+        _, ok := cardCache[cardName]
+        if !ok {
+            return errors.New("no data for:" + cardName)
+        }
+    }
+    return nil
 }

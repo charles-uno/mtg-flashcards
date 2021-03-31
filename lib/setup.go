@@ -11,7 +11,7 @@ import (
 )
 
 
-func LoadDeck() []string {
+func LoadDeck() ([]string, error) {
     list := []string{}
     for _, line := range readLines("decklist.txt") {
         n_card := strings.SplitN(line, " ", 2)
@@ -21,7 +21,7 @@ func LoadDeck() []string {
             list = append(list, n_card[1])
         }
     }
-    return Shuffled(list)
+    return Shuffled(list), nil
 }
 
 
