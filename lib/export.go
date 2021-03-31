@@ -9,8 +9,8 @@ import (
 
 
 type report struct {
-    Success bool `json:"success"`
-    Plays []tag  `json:"plays"`
+    Turn    int     `json:"turn"`
+    Plays   []tag   `json:"plays"`
 }
 
 
@@ -56,7 +56,7 @@ func PrettyJSON(s string) string {
             log.Fatal("not sure how to export type", t.Type)
         }
     }
-    if rep.Success {
+    if rep.Turn > 1 {
         ret += "\nSUCCESS"
     } else {
         ret += "\nFAILURE"

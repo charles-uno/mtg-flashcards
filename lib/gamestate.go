@@ -14,7 +14,6 @@ import (
 type gameState struct {
     battlefield cardMap
     done bool
-    success bool
     hand cardMap
     hash string
     landPlays int
@@ -320,7 +319,6 @@ func (clone gameState) castExplore() []gameState {
 
 func (clone gameState) castPrimevalTitan() []gameState {
     clone.done = true
-    clone.success = true
     return []gameState{clone}
 }
 
@@ -448,7 +446,7 @@ func (self *gameState) logCardMap(cm cardMap) {
 
 func (self *gameState) GiveUp() {
     self.done = true
-    self.success = false
+    self.turn = -1
     self.logBreak()
     self.logText("giving up!")
 }
@@ -457,7 +455,7 @@ func (self *gameState) GiveUp() {
 func (self *gameState) ToJSON() string {
     self.resolveCache()
     // Pull off the last trailing comma so we have a valid JSON list of objects
-    return "{\"success\": " + strconv.FormatBool(self.success) + ", " +
+    return "{\"turn\": " + strconv.Itoa(self.turn) + ", " +
         "\"plays\": [" + self.jsonLog[:len(self.jsonLog)-1] + "]}\n"
 }
 
@@ -481,7 +479,6 @@ func (state *gameState) Hash() string {
             state.battlefield.Pretty(),
             state.manaPool.Pretty(),
             strconv.FormatBool(state.done),
-            strconv.FormatBool(state.success),
             strconv.Itoa(state.landPlays),
             state.library.Pretty(),
         },
