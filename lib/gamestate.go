@@ -135,7 +135,7 @@ func (clone gameState) cast(c card) []gameState {
     clone.logText("cast ")
     clone.logCard(c)
     clone.hand = clone.hand.Minus(c)
-    if c.name != "Primeval Titan" {
+    if c.name != "Primeval Titan" && c.name != "Summoner's Pact" {
         clone.logManaPool()
     }
     // Now figure out what it does
@@ -434,12 +434,15 @@ func (self *gameState) logCard(c card) {
 
 func (self *gameState) logCardMap(cm cardMap) {
     for c, n := range cm.Items() {
-        self.logCard(c)
         if n > 1 {
-            self.logText("*" + strconv.Itoa(n))
+            // TODO: Use the unicode multiplication symbol instead
+            self.logText(strconv.Itoa(n) + "*")
         }
+        self.logCard(c)
         self.logText(" ")
     }
+    // Get rid of the trailing whitespace
+    self.jsonCache = ""
 }
 
 

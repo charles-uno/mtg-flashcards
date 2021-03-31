@@ -19,9 +19,6 @@ type gameManager struct {
 
 
 func NewGame(handRaw []string, libraryRaw []string, otp bool) (gameManager, error) {
-
-    log.Println("GOT TO HERE")
-
     allCardNames := []string{}
     handCards := []card{}
     for _, cardName := range handRaw {
