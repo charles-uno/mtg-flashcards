@@ -64,7 +64,6 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
     }
     fmt.Fprintf(w, game.ToJSON())
     log.Println("done with calculation at /api/play")
-    fmt.Println(game.ToJSON())
     fmt.Println(game.Pretty())
 }
 
