@@ -50,7 +50,6 @@ func NewGame(handRaw []string, libraryRaw []string, otp bool) (gameManager, erro
         onThePlay: otp,
         turn: 0,
     }
-    state.logBreak()
     state.logText(playOrder + ", opening hand: ")
     state.logCardMap(hand)
     return GameManager(state), nil

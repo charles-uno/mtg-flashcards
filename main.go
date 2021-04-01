@@ -16,7 +16,7 @@ import (
 type openingHand struct {
     Hand        []string    `json:"hand"`
     Library     []string    `json:"library"`
-    OnThePlay   bool        `json:"on_the_play"`
+    OnThePlay   bool        `json:"onThePlay"`
 }
 
 
