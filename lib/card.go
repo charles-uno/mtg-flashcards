@@ -45,6 +45,13 @@ func (self *card) CastingCost() mana {
 }
 
 
+func (self *card) CanBeTitan() bool {
+    // Most common fail case is that we can't find Primeval Titan. Let's try to
+    // identify those situations sooner.
+    return GetCardData(self.name).CanBeTitan
+}
+
+
 func (self *card) IsLand() bool {
     return GetCardData(self.name).Type == "land"
 }
@@ -90,6 +97,7 @@ type cardData struct {
     Pretty string       `yaml:"pretty"`
     Type string         `yaml:"type"`
     TapsFor mana        `yaml:"taps_for"`
+    CanBeTitan bool     `yaml:"can_be_titan"`
 }
 
 

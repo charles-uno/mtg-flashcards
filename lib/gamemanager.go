@@ -7,9 +7,6 @@ import (
 )
 
 
-var maxTurns = 4
-
-
 type gameManager struct {
     // Use a map to imitate a Python-style set of game states
     states map[string]gameState
@@ -67,7 +64,7 @@ func GameManager(states ...gameState) gameManager {
 }
 
 
-func (self *gameManager) NextTurn() gameManager {
+func (self *gameManager) NextTurn(maxTurns int) gameManager {
     if self.Size() == 0 {
         log.Fatal("called NextTurn on empty gameManager")
     }
@@ -81,7 +78,7 @@ func (self *gameManager) NextTurn() gameManager {
     ret := GameManager()
     for self.Size() > 0 {
         state_old := self.Pop()
-        for _, state_new := range state_old.NextStates() {
+        for _, state_new := range state_old.NextStates(maxTurns) {
             // If we find a state that gets there, we're done
             if state_new.done {
                 return GameManager(state_new)

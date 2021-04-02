@@ -27,12 +27,16 @@ type gameState struct {
 }
 
 
-func (self *gameState) NextStates() []gameState {
+func (self *gameState) NextStates(maxTurns int) []gameState {
     ret := []gameState{}
-    // Don't skip land drops if we have a non-bounce land in hand (unless we
-    // already have 6 mana)
+    // Try to identify doomed lines early rather than playing them out
+    ret = append(ret, self.checkForFailure(maxTurns)...)
+    if len(ret) > 0 {
+        return ret
+    }
+    // Don't skip land drops
     if !self.skippedLandDrop() {
-        ret = append(ret, self.passTurn()...)
+        ret = append(ret, self.passTurn(maxTurns)...)
     }
     for c, _ := range self.hand.Items() {
         if c.IsLand() {
@@ -56,6 +60,28 @@ func (self *gameState) NextStates() []gameState {
         }
     }
     return ret
+}
+
+
+func (self *gameState) checkForFailure(maxTurns int) []gameState {
+    if self.turn < maxTurns {
+        return []gameState{}
+    }
+    // If we don't have Primeval Titan or a way to find it, bail
+    noTitan := true
+    for c, _ := range self.hand.Items() {
+        if c.CanBeTitan() {
+            noTitan = false
+        }
+    }
+    if noTitan {
+        clone := self.clone()
+        clone.logBreak()
+        clone.logText("failed to find ")
+        clone.logCard(Card("Primeval Titan"))
+        return clone.passTurn(maxTurns)
+    }
+    return []gameState{}
 }
 
 
@@ -83,8 +109,14 @@ func (clone gameState) clone() gameState {
 }
 
 
-func (clone gameState) passTurn() []gameState {
+func (clone gameState) passTurn(maxTurns int) []gameState {
     clone.turn += 1
+    if clone.turn > maxTurns {
+        // Nice to have output here in terms of traceability when debugging,
+        // but it doesn't read nicely.
+//        clone.logText("no more turns")
+        return []gameState{clone}
+    }
     clone.logBreak()
     clone.logText("turn " + strconv.Itoa(clone.turn))
     // Empty mana pool then tap out

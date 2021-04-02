@@ -58,8 +58,9 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
         return
     }
     // Iterate through the turns
+    maxTurns := 4
     for game.IsNotDone() {
-        game = game.NextTurn()
+        game = game.NextTurn(maxTurns)
     }
     fmt.Fprintf(w, game.ToJSON())
     log.Println("done with calculation at /api/play")
