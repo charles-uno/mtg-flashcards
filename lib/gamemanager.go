@@ -75,6 +75,9 @@ func (self *gameManager) NextTurn() gameManager {
     if self.done {
         return *self
     }
+    if self.Turn > 0 {
+        log.Println("starting turn", self.Turn, "with", self.Size(), "states")
+    }
     ret := GameManager()
     for self.Size() > 0 {
         state_old := self.Pop()
@@ -93,7 +96,7 @@ func (self *gameManager) NextTurn() gameManager {
     // After turn four or so, further work is expensive but not interesting.
     // Pop off the longest log we can find to show we tried.
     if ret.Turn > maxTurns {
-        log.Println("giving up on turn", ret.Turn)
+        log.Println("giving up on turn", ret.Turn, "with", ret.Size(), "states")
         bestState := ret.Pop()
         for ret.Size() > 0 {
             state := ret.Pop()

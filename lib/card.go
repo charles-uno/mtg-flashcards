@@ -50,6 +50,11 @@ func (self *card) IsLand() bool {
 }
 
 
+func (self *card) IsBounceLand() bool {
+    return self.name == "Simic Growth Chamber"
+}
+
+
 func (self *card) IsCreature() bool {
     return GetCardData(self.name).Type == "creature"
 }
@@ -102,7 +107,7 @@ func InitCardDataCache() {
     if err != nil {
         log.Fatal(err)
     }
-    log.Println("loaded carddata.yaml")
+    log.Println("loading carddata.yaml")
     for _, cd := range cardDataRaw {
         if cd.Pretty == "" {
             cd.Pretty = slug(cd.Name)
@@ -127,7 +132,7 @@ func EnsureCardData(cardNames []string) error {
     for _, cardName := range cardNames {
         _, ok := cardCache[cardName]
         if !ok {
-            return errors.New("no data for:" + cardName)
+            return errors.New("no data for: " + cardName)
         }
     }
     return nil

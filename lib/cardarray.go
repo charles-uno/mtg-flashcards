@@ -23,6 +23,11 @@ func (self *cardArray) Items() map[card]int {
 }
 
 
+func (self *cardArray) Get(i int) *card {
+    return &self.arr[i]
+}
+
+
 func (self *cardArray) Pretty() string {
     chunks := []string{}
     for _, c := range self.arr {

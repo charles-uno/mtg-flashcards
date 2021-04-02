@@ -59,7 +59,6 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
     }
     // Iterate through the turns
     for game.IsNotDone() {
-        log.Println("starting turn", game.Turn, "with", game.Size(), "states")
         game = game.NextTurn()
     }
     fmt.Fprintf(w, game.ToJSON())

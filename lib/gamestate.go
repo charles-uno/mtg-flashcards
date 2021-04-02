@@ -28,26 +28,53 @@ type gameState struct {
 
 
 func (self *gameState) NextStates() []gameState {
-    ret := self.passTurn()
+    ret := []gameState{}
+    // Don't skip land drops if we have a non-bounce land in hand (unless we
+    // already have 6 mana)
+    if !self.skippedLandDrop() {
+        ret = append(ret, self.passTurn()...)
+    }
     for c, _ := range self.hand.Items() {
         if c.IsLand() {
-            for _, state := range self.play(c) {
-                ret = append(ret, state)
+            // No need to ever go above 6 mana
+            if self.manaPool.Total >= 6 {
+                continue
             }
+            ret = append(ret, self.play(c)...)
         } else {
-            for _, state := range self.cast(c) {
-                ret = append(ret, state)
+            // If we already have 6 mana, no need to cast anything but Titan.
+            // (Force the model to cast cantrips before we get to 6.)
+            if self.manaPool.Total >= 6 && c.name != "Primeval Titan" {
+                continue
             }
+            ret = append(ret, self.cast(c)...)
         }
     }
     for c, _ := range self.battlefield.Items() {
         if c.HasAbility() {
-            for _, state := range self.activate(c) {
-                ret = append(ret, state)
-            }
+            ret = append(ret, self.activate(c)...)
         }
     }
     return ret
+}
+
+
+func (self *gameState) skippedLandDrop() bool {
+    // Return true if all of the following are true:
+    // 1. We have a non-bounce land in hand
+    // 2. We have a land play remaining
+    // 3. We have less than 6 mana available
+    // Note: this has a very small chance to miss lines! For example, if we
+    // have 4 mana it might make sense to keep Bojuka Bog in hand in case we
+    // draw into a second Amulet.
+    if self.landPlays > 0 && self.manaPool.Total < 6 {
+        for c, _ := range self.hand.Items() {
+            if c.IsLand() && !c.IsBounceLand() {
+                return true
+            }
+        }
+    }
+    return false
 }
 
 
@@ -139,6 +166,8 @@ func (clone gameState) cast(c card) []gameState {
     }
     // Now figure out what it does
     switch c.name {
+        case "Abundant Harvest":
+            return clone.castAbundantHarvest()
         case "Adventurous Impulse":
             return clone.castAdventurousImpulse()
         case "Amulet of Vigor":
@@ -260,9 +289,45 @@ func (self *gameState) castAdventurousImpulse() []gameState {
             ret = append(ret, clone)
         }
     }
+
+    // Note: we do not handle the possibility of whiffing. If we did, the model
+    // would sometimes cast this spell to intentionally mill 3 cards.
+
     return ret
 }
 
+func (self *gameState) castAbundantHarvest() []gameState {
+    ret := []gameState{}
+    for _, chooseLand := range []bool{true, false} {
+        clone := self.clone()
+        if chooseLand {
+            clone.logText(", choose land")
+        } else {
+            clone.logText(", choose nonland")
+        }
+        i := 0
+        for {
+            nextCard := self.library.Get(i)
+            if (chooseLand && nextCard.IsLand()) || (!chooseLand && !nextCard.IsLand()) {
+                break
+            }
+            i += 1
+        }
+        revealed, library := self.library.SplitAfter(i+1)
+        keep := revealed[i]
+        clone.library = library
+        clone.hand = clone.hand.Plus(keep)
+        clone.logText(", reveal")
+        for _, c := range revealed {
+            clone.logText(" ")
+            clone.logCard(c)
+        }
+        clone.logText(", grab ")
+        clone.logCard(keep)
+        ret = append(ret, clone)
+    }
+    return ret
+}
 
 func (self *gameState) castArborealGrazer() []gameState {
     ret := []gameState{}
