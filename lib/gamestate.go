@@ -404,6 +404,7 @@ func (clone gameState) castAzusaLostButSeeking() []gameState {
 
 func (clone gameState) castDryadOfTheIlysianGrove() []gameState {
     clone.battlefield = clone.battlefield.Plus(Card("Dryad of the Ilysian Grove"))
+    clone.landPlays += 1
     return []gameState{clone}
 }
 
