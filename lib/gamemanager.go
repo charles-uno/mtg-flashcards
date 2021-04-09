@@ -126,6 +126,15 @@ func (self *gameManager) ToJSON() string {
 }
 
 
+func (self *gameManager) ToMiniJSON() string {
+    lines := []string{}
+    for _, state := range self.states {
+        lines = append(lines, state.ToMiniJSON())
+    }
+    return strings.Join(lines, "\n~~~\n")
+}
+
+
 func (self *gameManager) Add(state gameState) {
     self.states[state.Hash()] = state
     self.done = state.done

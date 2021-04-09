@@ -56,7 +56,7 @@ func PrettyJSON(s string) string {
             log.Fatal("not sure how to export type", t.Type)
         }
     }
-    if rep.Turn > 1 {
+    if rep.Turn > 0 {
         ret += "\nSUCCESS"
     } else {
         ret += "\nFAILURE"

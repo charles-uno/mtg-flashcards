@@ -2,6 +2,7 @@ package lib
 
 
 import (
+    "encoding/json"
     "log"
     "strings"
     "strconv"
@@ -212,6 +213,8 @@ func (clone gameState) cast(c card) []gameState {
             return clone.castAzusaLostButSeeking()
         case "Dryad of the Ilysian Grove":
             return clone.castDryadOfTheIlysianGrove()
+        case "Elvish Spirit Guide":
+            return clone.castElvishSpiritGuide()
         case "Explore":
             return clone.castExplore()
         case "Primeval Titan":
@@ -321,10 +324,7 @@ func (self *gameState) castAdventurousImpulse() []gameState {
             ret = append(ret, clone)
         }
     }
-
-    // Note: we do not handle the possibility of whiffing. If we did, the model
-    // would sometimes cast this spell to intentionally mill 3 cards.
-
+    // Note: do we want to handle the possibility of whiffing?
     return ret
 }
 
@@ -405,6 +405,15 @@ func (clone gameState) castAzusaLostButSeeking() []gameState {
 func (clone gameState) castDryadOfTheIlysianGrove() []gameState {
     clone.battlefield = clone.battlefield.Plus(Card("Dryad of the Ilysian Grove"))
     clone.landPlays += 1
+    return []gameState{clone}
+}
+
+
+func (clone gameState) castElvishSpiritGuide() []gameState {
+    if clone.turn <= 0 {
+        return []gameState{}
+    }
+    clone.manaPool = clone.manaPool.Plus(Mana("G"))
     return []gameState{clone}
 }
 
@@ -555,6 +564,22 @@ func (self *gameState) ToJSON() string {
     // Pull off the last trailing comma so we have a valid JSON list of objects
     return "{\"turn\": " + strconv.Itoa(self.turn) + ", " +
         "\"plays\": [" + self.jsonLog[:len(self.jsonLog)-1] + "]}\n"
+}
+
+
+type miniGame struct {
+    Turn        int     `json:"turn"`
+    OnThePlay   bool    `json:"onThePlay"`
+}
+
+
+func (self *gameState) ToMiniJSON() string {
+    mini := miniGame{
+        Turn: self.turn,
+        OnThePlay: self.onThePlay,
+    }
+    b, _ := json.Marshal(mini)
+    return string(b) + "\n"
 }
 
 

@@ -45,6 +45,11 @@
     green: 1
     total: 3
   type: creature
+- name: Elvish Spirit Guide
+  casting_cost:
+    green: 0
+    total: 0
+  type: creature
 - name: Explore
   casting_cost:
     green: 1
