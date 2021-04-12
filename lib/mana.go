@@ -45,6 +45,15 @@ func (self *mana) Minus(other mana) (mana, error) {
 }
 
 
+func (self *mana) CanPay(other mana) bool {
+    if self.Green >= other.Green && self.Total >= other.Total {
+        return true
+    } else {
+        return false
+    }
+}
+
+
 func (m *mana) Pretty() string {
     s := ""
     if m.Total > m.Green || m.Green == 0 {

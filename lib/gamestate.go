@@ -35,8 +35,8 @@ func (self *gameState) NextStates(maxTurns int) []gameState {
     if len(ret) > 0 {
         return ret
     }
-    // Don't skip land drops
-    if !self.skippedLandDrop() {
+    // Don't skip land drops, and don't skip some spells
+    if !self.skippedLandDrop() && !self.skippedSpell() {
         ret = append(ret, self.passTurn(maxTurns)...)
     }
     for c, _ := range self.hand.Items() {
@@ -99,6 +99,21 @@ func (self *gameState) skippedLandDrop() bool {
             if c.IsLand() && !c.IsBounceLand() {
                 return true
             }
+        }
+    }
+    return false
+}
+
+
+func (self *gameState) skippedSpell() bool {
+    // The computer will sometimes find it advantageou to cast a cantrip later
+    // because it "knows" the order of the deck. Do what we can to suppress
+    // that non-human play pattern. We might want to hold onto Explore for ramp
+    // purposes with multiple copies of Amulet, but a human player is never
+    // going to pass the turn rather than cast Ancient Stirrings.
+    for c, _ := range self.hand.Items() {
+        if c.AlwaysCast() && self.manaPool.CanPay(c.CastingCost()) {
+            return true
         }
     }
     return false
@@ -441,7 +456,10 @@ func (self *gameState) castSummonersPact() []gameState {
         clone.logText(", grab ")
         clone.logCard(c)
         clone.manaDebt = clone.manaDebt.Plus(Mana("2GG"))
-        ret = append(ret, clone)
+        // To cut down on near-identical sequences, cast immediately
+        for _, state := range clone.cast(c) {
+            ret = append(ret, state)
+        }
     }
     return ret
 }
@@ -496,11 +514,14 @@ func (clone gameState) draw(n int) []gameState {
 
 
 func (self *gameState) logManaPool() {
+    // Might want this back later, but for now let's skip it
+    /*
     if self.manaPool.Total > 0 {
         self.logText(", ")
         self.logMana(self.manaPool)
         self.logText(" in pool")
     }
+    */
 }
 
 

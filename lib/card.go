@@ -52,6 +52,11 @@ func (self *card) CanBeTitan() bool {
 }
 
 
+func (self *card) AlwaysCast() bool {
+    return GetCardData(self.name).AlwaysCast
+}
+
+
 func (self *card) IsLand() bool {
     return GetCardData(self.name).Type == "land"
 }
@@ -98,6 +103,7 @@ type cardData struct {
     Type string         `yaml:"type"`
     TapsFor mana        `yaml:"taps_for"`
     CanBeTitan bool     `yaml:"can_be_titan"`
+    AlwaysCast bool     `yaml:"always_cast"`
 }
 
 

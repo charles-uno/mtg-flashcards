@@ -4,17 +4,20 @@
     total: 1
   type: sorcery
   can_be_titan: true
+  always_cast: true
 - name: Adventurous Impulse
   casting_cost:
     green: 1
     total: 1
   type: sorcery
   can_be_titan: true
+  always_cast: true
 - name: Amulet of Vigor
   casting_cost:
     green: 0
     total: 1
   type: artifact
+  always_cast: true
 - name: Arboreal Grazer
   casting_cost:
     green: 1
@@ -68,6 +71,7 @@
     total: 6
   type: creature
   can_be_titan: true
+  always_cast: true
 - name: Simic Growth Chamber
   type: land
   taps_for:
