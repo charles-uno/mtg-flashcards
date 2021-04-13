@@ -24,12 +24,22 @@ type gameState struct {
     manaDebt mana
     manaPool mana
     onThePlay bool
+    timestamp int64
     turn int
 }
 
 
 func (self *gameState) NextStates(maxTurns int) []gameState {
     ret := []gameState{}
+    // If we're out of time, see about wrapping up gracefully. Note that
+    // timestamp is measured in nanoseconds
+    if timestamp() - self.timestamp > 3e9 {
+        clone := self.clone()
+        clone.logBreak()
+        clone.logText("timeout")
+        clone.GiveUp()
+        return []gameState{clone}
+    }
     // Try to identify doomed lines early rather than playing them out
     ret = append(ret, self.checkForFailure(maxTurns)...)
     if len(ret) > 0 {

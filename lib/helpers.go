@@ -47,3 +47,9 @@ func readLines(filename string) []string {
     }
     return lines
 }
+
+
+func timestamp() int64 {
+    now := time.Now()
+    return now.UnixNano()
+}

@@ -45,6 +45,7 @@ func NewGame(handRaw []string, libraryRaw []string, otp bool) (gameManager, erro
         landPlays: 0,
         library: CardArray(libraryCards),
         onThePlay: otp,
+        timestamp: timestamp(),
         turn: 0,
     }
     state.logText(playOrder + ", opening hand: ")
