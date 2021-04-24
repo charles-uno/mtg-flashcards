@@ -42,6 +42,7 @@ func (self *cardMap) Pretty() string {
 
 
 func (self *cardMap) Items() map[card]int {
+    // TODO: iterate over keys in alphabetical order
     return self.counts
 }
 

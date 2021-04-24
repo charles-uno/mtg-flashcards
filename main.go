@@ -49,7 +49,13 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
         log.Println("bad payload at /api/play")
         return
     }
-    game, err := lib.NewGame(oh.Hand, lib.Shuffled(oh.Library), oh.OnThePlay)
+    maxTurns := 4
+    game, err := lib.NewGame(
+        lib.Shuffled(oh.Library),
+        oh.Hand,
+        oh.OnThePlay,
+        maxTurns,
+    )
     if err != nil {
         reply := map[string]string{"error": err.Error()}
         b, _ := json.Marshal(reply)
@@ -58,9 +64,8 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
         return
     }
     // Iterate through the turns
-    maxTurns := 4
-    for game.IsNotDone() {
-        game = game.NextTurn(maxTurns)
+    for !game.IsDone() {
+        game = game.NextTurn()
     }
     fmt.Fprintf(w, game.ToJSON())
     log.Println("done with calculation at /api/play")
@@ -82,7 +87,13 @@ func handleEndToEnd(w http.ResponseWriter, r *http.Request) {
         Library: deck[7:],
         OnThePlay: flip(),
     }
-    game, err := lib.NewGame(oh.Hand, lib.Shuffled(oh.Library), oh.OnThePlay)
+    maxTurns := 4
+    game, err := lib.NewGame(
+        lib.Shuffled(oh.Library),
+        oh.Hand,
+        oh.OnThePlay,
+        maxTurns,
+    )
     if err != nil {
         reply := map[string]string{"error": err.Error()}
         b, _ := json.Marshal(reply)
@@ -91,9 +102,8 @@ func handleEndToEnd(w http.ResponseWriter, r *http.Request) {
         return
     }
     // Iterate through the turns
-    maxTurns := 4
-    for game.IsNotDone() {
-        game = game.NextTurn(maxTurns)
+    for !game.IsDone() {
+        game = game.NextTurn()
     }
     fmt.Fprintf(w, game.ToMiniJSON())
     log.Println("done with calculation at /api/e2e")

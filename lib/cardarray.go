@@ -2,6 +2,7 @@ package lib
 
 
 import (
+    "log"
     "strings"
 )
 
@@ -38,6 +39,9 @@ func (self *cardArray) Pretty() string {
 
 
 func (ca cardArray) SplitAfter(n int) ([]card, cardArray) {
+    if len(ca.arr) < n {
+        log.Fatal("attempted SplitAfter larger than the cardArray")
+    }
     popped := ca.arr[:n]
     ca.arr = ca.arr[n:]
     return popped, ca

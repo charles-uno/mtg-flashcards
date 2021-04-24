@@ -8,14 +8,15 @@ import (
 
 
 type gameManager struct {
+    maxTurns int
     // Use a map to imitate a Python-style set of game states
     states map[string]gameState
-    Turn int
-    done bool
+    success bool
+    turn int
 }
 
 
-func NewGame(handRaw []string, libraryRaw []string, otp bool) (gameManager, error) {
+func NewGame(libraryRaw []string, handRaw []string, otp bool, maxTurns int) (gameManager, error) {
     allCardNames := []string{}
     handCards := []card{}
     for _, cardName := range handRaw {
@@ -31,25 +32,7 @@ func NewGame(handRaw []string, libraryRaw []string, otp bool) (gameManager, erro
     if err != nil {
         return gameManager{}, err
     }
-    hand := CardMap(handCards)
-    var playOrder string
-    if otp {
-        playOrder = "on the play"
-    } else {
-        playOrder = "on the draw"
-    }
-    state := gameState{
-        hand: hand,
-        // Empty string is fine for the initial game state
-        hash: "",
-        landPlays: 0,
-        library: CardArray(libraryCards),
-        onThePlay: otp,
-        timestamp: timestamp(),
-        turn: 0,
-    }
-    state.logText(playOrder + ", opening hand: ")
-    state.logCardMap(hand)
+    state := NewGameState(libraryCards, handCards, otp, maxTurns)
     return GameManager(state), nil
 }
 
@@ -65,36 +48,36 @@ func GameManager(states ...gameState) gameManager {
 }
 
 
-func (self *gameManager) NextTurn(maxTurns int) gameManager {
+func (self *gameManager) NextTurn() gameManager {
     if self.Size() == 0 {
         log.Fatal("called NextTurn on empty gameManager")
     }
     // Once we find a line, we're done iterating
-    if self.done {
+    if self.success {
         return *self
     }
-    if self.Turn > 0 {
-        log.Println("starting turn", self.Turn, "with", self.Size(), "states")
+    if self.turn > 0 {
+        log.Println("starting turn", self.turn, "with", self.Size(), "states")
     }
     ret := GameManager()
     for self.Size() > 0 {
-        state_old := self.Pop()
-        for _, state_new := range state_old.NextStates(maxTurns) {
+        stateOld := self.Pop()
+        for _, stateNew := range stateOld.NextStates() {
             // If we find a state that gets there, we're done
-            if state_new.done {
-                return GameManager(state_new)
+            if stateNew.success {
+                return GameManager(stateNew)
             }
-            if state_new.turn == self.Turn {
-                self.Add(state_new)
+            if stateNew.turn == self.turn {
+                self.Add(stateNew)
             } else {
-                ret.Add(state_new)
+                ret.Add(stateNew)
             }
         }
     }
     // After turn four or so, further work is expensive but not interesting.
     // Pop off the longest log we can find to show we tried.
-    if ret.Turn > maxTurns {
-        log.Println("giving up on turn", ret.Turn, "with", ret.Size(), "states")
+    if ret.turn > self.maxTurns {
+        log.Println("giving up on turn", ret.turn, "with", ret.Size(), "states")
         bestState := ret.Pop()
         for ret.Size() > 0 {
             state := ret.Pop()
@@ -102,7 +85,7 @@ func (self *gameManager) NextTurn(maxTurns int) gameManager {
                 bestState = state
             }
         }
-        bestState.GiveUp()
+        bestState.MarkDeadEnd()
         return GameManager(bestState)
     }
     return ret
@@ -138,9 +121,11 @@ func (self *gameManager) ToMiniJSON() string {
 
 func (self *gameManager) Add(state gameState) {
     self.states[state.Hash()] = state
-    self.done = state.done
+    self.maxTurns = state.maxTurns
+    // By construction, in-progress states and completed states never mix
+    self.success = state.success
     // Turn is uniform for all states within a gameManager
-    self.Turn = state.turn
+    self.turn = state.turn
 }
 
 
@@ -159,8 +144,8 @@ func (self *gameManager) Size() int {
 }
 
 
-func (self *gameManager) IsNotDone() bool {
-    return !self.done
+func (self *gameManager) IsDone() bool {
+    return self.turn > self.maxTurns || self.success
 }
 
 

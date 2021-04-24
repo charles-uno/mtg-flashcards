@@ -14,7 +14,7 @@ import (
 // spell, is enacted by creating a new state.
 type gameState struct {
     battlefield cardMap
-    done bool
+    deadEnd bool
     hand cardMap
     hash string
     landPlays int
@@ -23,31 +23,65 @@ type gameState struct {
     jsonLog string
     manaDebt mana
     manaPool mana
+    maxTurns int
     onThePlay bool
+    success bool
     timestamp int64
     turn int
 }
 
 
-func (self *gameState) NextStates(maxTurns int) []gameState {
+func NewGameState(library []card, hand []card, otp bool, maxTurns int) gameState {
+    state := gameState{
+        hand: CardMap(hand),
+        // Empty string is fine for the initial game state
+        hash: "",
+        landPlays: 0,
+        library: CardArray(library),
+        maxTurns: maxTurns,
+        onThePlay: otp,
+        timestamp: timestamp(),
+        turn: 0,
+    }
+    if otp {
+        state.logText("on the play")
+    } else {
+        state.logText("on the draw")
+    }
+    state.logText(", opening hand: ")
+    state.logCardMap(state.hand)
+    return state
+}
+
+
+func (self *gameState) NextStates() []gameState {
     ret := []gameState{}
     // If we're out of time, see about wrapping up gracefully. Note that
     // timestamp is measured in nanoseconds
-    if timestamp() - self.timestamp > 3e9 {
-        clone := self.clone()
-        clone.logBreak()
-        clone.logText("timeout")
-        clone.GiveUp()
-        return []gameState{clone}
+    if timestamp() - self.timestamp > 4e9 {
+        self.logBreak()
+        self.logText("timeout")
+        self.MarkDeadEnd()
+    }
+    // If we've flagged this state as a dead end, just wait out the clock
+    if self.deadEnd {
+        return self.passTurn()
     }
     // Try to identify doomed lines early rather than playing them out
-    ret = append(ret, self.checkForFailure(maxTurns)...)
+    ret = append(ret, self.checkForFailure()...)
     if len(ret) > 0 {
         return ret
     }
+
+    // TODO: Try to identify lines of play that are correct 99% of the time.
+    // Like if we have a bounce land, turn 1 Amulet is best.
+
+    // TODO: Make sure we allow cantrips to whiff. Otherwise we'll get stuck
+    // with the "always play" setting.
+
     // Don't skip land drops, and don't skip some spells
     if !self.skippedLandDrop() && !self.skippedSpell() {
-        ret = append(ret, self.passTurn(maxTurns)...)
+        ret = append(ret, self.passTurn()...)
     }
     for c, _ := range self.hand.Items() {
         if c.IsLand() {
@@ -57,11 +91,7 @@ func (self *gameState) NextStates(maxTurns int) []gameState {
             }
             ret = append(ret, self.play(c)...)
         } else {
-            // If we already have 6 mana, no need to cast anything but Titan.
-            // (Force the model to cast cantrips before we get to 6.)
-            if self.manaPool.Total >= 6 && c.name != "Primeval Titan" {
-                continue
-            }
+            // TODO: If we have 6 mana, only cast Titan or Pact?
             ret = append(ret, self.cast(c)...)
         }
     }
@@ -74,8 +104,8 @@ func (self *gameState) NextStates(maxTurns int) []gameState {
 }
 
 
-func (self *gameState) checkForFailure(maxTurns int) []gameState {
-    if self.turn < maxTurns {
+func (self *gameState) checkForFailure() []gameState {
+    if self.turn < self.maxTurns {
         return []gameState{}
     }
     // If we don't have Primeval Titan or a way to find it, bail
@@ -90,7 +120,8 @@ func (self *gameState) checkForFailure(maxTurns int) []gameState {
         clone.logBreak()
         clone.logText("failed to find ")
         clone.logCard(Card("Primeval Titan"))
-        return clone.passTurn(maxTurns)
+        clone.MarkDeadEnd()
+        return clone.passTurn()
     }
     return []gameState{}
 }
@@ -135,12 +166,14 @@ func (clone gameState) clone() gameState {
 }
 
 
-func (clone gameState) passTurn(maxTurns int) []gameState {
+func (clone gameState) passTurn() []gameState {
     clone.turn += 1
-    if clone.turn > maxTurns {
+    if clone.turn > clone.maxTurns {
         // Nice to have output here in terms of traceability when debugging,
         // but it doesn't read nicely.
+//        clone.logBreak()
 //        clone.logText("no more turns")
+        clone.MarkDeadEnd()
         return []gameState{clone}
     }
     clone.logBreak()
@@ -163,7 +196,6 @@ func (clone gameState) passTurn(maxTurns int) []gameState {
         clone.logText(", pay for pact")
         clone.logManaPool()
     }
-    // TODO: pay for Pact
     // Reset land drops. Check for Dryad, Scout, Azusa
     clone.landPlays = 1 +
         clone.battlefield.Count(Card("Dryad of the Ilysian Grove")) +
@@ -337,19 +369,23 @@ func (self *gameState) castAdventurousImpulse() []gameState {
     ret := []gameState{}
     milled_raw, remaining := self.library.SplitAfter(3)
     milled := CardMap(milled_raw)
+    self.logText(", mill ")
+    self.logCardMap(milled)
+    self.library = remaining
     for c, _ := range milled.Items() {
         if c.IsLand() || c.IsCreature() {
             clone := self.clone()
-            clone.logText(", mill ")
-            clone.logCardMap(milled)
             clone.logText(", grab ")
             clone.logCard(c)
             clone.hand = clone.hand.Plus(c)
-            clone.library = remaining
             ret = append(ret, clone)
         }
     }
-    // Note: do we want to handle the possibility of whiffing?
+    if len(ret) == 0 {
+        clone := self.clone()
+        clone.logText(", whiff")
+        ret = append(ret, clone)
+    }
     return ret
 }
 
@@ -405,17 +441,22 @@ func (self *gameState) castAncientStirrings() []gameState {
     ret := []gameState{}
     milled_raw, remaining := self.library.SplitAfter(5)
     milled := CardMap(milled_raw)
+    self.library = remaining
+    self.logText(", mill ")
+    self.logCardMap(milled)
     for c, _ := range milled.Items() {
         if c.IsColorless() {
             clone := self.clone()
-            clone.logText(", mill ")
-            clone.logCardMap(milled)
             clone.logText(", grab ")
             clone.logCard(c)
             clone.hand = clone.hand.Plus(c)
-            clone.library = remaining
             ret = append(ret, clone)
         }
+    }
+    if len(ret) == 0 {
+        clone := self.clone()
+        clone.logText(", whiff")
+        ret = append(ret, clone)
     }
     return ret
 }
@@ -450,7 +491,7 @@ func (clone gameState) castExplore() []gameState {
 
 
 func (clone gameState) castPrimevalTitan() []gameState {
-    clone.done = true
+    clone.success = true
     return []gameState{clone}
 }
 
@@ -459,6 +500,10 @@ func (self *gameState) castSummonersPact() []gameState {
     ret := []gameState{}
     for c, _ := range self.library.Items() {
         if !c.IsCreature() {
+            continue
+        }
+        // Don't Pact for a card we already have in hand
+        if self.hand.Count(c) > 0 {
             continue
         }
         clone := self.clone()
@@ -497,8 +542,13 @@ func (clone gameState) playWastes() []gameState {
 
 func (self *gameState) playSimicGrowthChamber() []gameState {
     ret := []gameState{}
+    nAmulets := self.battlefield.Count(Card("Amulet of Vigor"))
     for c, _ := range self.battlefield.Items() {
         if !c.IsLand() {
+            continue
+        }
+        // Without an Amulet, never pick itself back up
+        if nAmulets == 0 && c.IsBounceLand() {
             continue
         }
         clone := self.clone()
@@ -525,13 +575,13 @@ func (clone gameState) draw(n int) []gameState {
 
 func (self *gameState) logManaPool() {
     // Might want this back later, but for now let's skip it
-    /*
+    return
+
     if self.manaPool.Total > 0 {
         self.logText(", ")
         self.logMana(self.manaPool)
         self.logText(" in pool")
     }
-    */
 }
 
 
@@ -582,18 +632,23 @@ func (self *gameState) logCardMap(cm cardMap) {
 }
 
 
-func (self *gameState) GiveUp() {
-    self.done = true
-    self.turn = -1
-    self.logBreak()
-    self.logText("giving up!")
+func (self *gameState) MarkDeadEnd() {
+    if !self.deadEnd {
+        self.logBreak()
+        self.logText("giving up!")
+        self.deadEnd = true
+    }
 }
 
 
 func (self *gameState) ToJSON() string {
     self.resolveCache()
+    turn := "-1"
+    if self.success {
+        turn = strconv.Itoa(self.turn)
+    }
     // Pull off the last trailing comma so we have a valid JSON list of objects
-    return "{\"turn\": " + strconv.Itoa(self.turn) + ", " +
+    return "{\"turn\": " + turn + ", " +
         "\"plays\": [" + self.jsonLog[:len(self.jsonLog)-1] + "]}\n"
 }
 
@@ -632,7 +687,8 @@ func (state *gameState) Hash() string {
             state.hand.Pretty(),
             state.battlefield.Pretty(),
             state.manaPool.Pretty(),
-            strconv.FormatBool(state.done),
+            strconv.FormatBool(state.success),
+            strconv.FormatBool(state.deadEnd),
             strconv.Itoa(state.landPlays),
             state.library.Pretty(),
         },
