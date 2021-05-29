@@ -52,6 +52,19 @@ func (self *cardMap) Count(c card) int {
 }
 
 
+func (self *cardMap) Replace(c0 card, c1 card) cardMap {
+    counts := make(map[card]int)
+    for c, n := range self.counts {
+        if c == c0 {
+            counts[c1] += n
+        } else {
+            counts[c] += n
+        }
+    }
+    return cardMap{counts: counts}
+}
+
+
 func (self *cardMap) Plus(cards ...card) cardMap {
     counts := make(map[card]int)
     for c, n := range self.counts {

@@ -27,9 +27,9 @@ func (self *card) Pretty() string {
 func (self *card) ToJSON() string {
     var t tag
     if self.IsLand() {
-        t = Tag("land", self.name)
+        t = Tag("land", self.Pretty(), self.Target())
     } else {
-        t = Tag("spell", self.name)
+        t = Tag("spell", self.Pretty(), self.Target())
     }
     return t.ToJSON()
 }
@@ -92,6 +92,15 @@ func (self *card) EntersTapped() bool {
 }
 
 
+func (self *card) Target() string {
+    ret := GetCardData(self.name).Target
+    if ret == "" {
+        ret = self.name
+    }
+    return ret
+}
+
+
 type cardData struct {
     // No need to duplicate card metadata over and over. Cache it by card name
     // and look it up as needed.
@@ -100,6 +109,7 @@ type cardData struct {
     CastingCost mana    `yaml:"casting_cost"`
     EntersTapped bool   `yaml:"enters_tapped"`
     Pretty string       `yaml:"pretty"`
+    Target string       `yaml:"target"`
     Type string         `yaml:"type"`
     TapsFor mana        `yaml:"taps_for"`
     CanBeTitan bool     `yaml:"can_be_titan"`
@@ -123,6 +133,7 @@ func InitCardDataCache() {
     }
     log.Println("loading carddata.yaml")
     for _, cd := range cardDataRaw {
+        // Pre-compute this since it gets used a lot
         if cd.Pretty == "" {
             cd.Pretty = slug(cd.Name)
         }

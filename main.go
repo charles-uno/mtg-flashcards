@@ -17,6 +17,7 @@ type openingHand struct {
     Hand        []string    `json:"hand"`
     Library     []string    `json:"library"`
     OnThePlay   bool        `json:"onThePlay"`
+    Verbose     bool        `json:"verbose"`
 }
 
 
@@ -33,6 +34,7 @@ func handleOpeningHand(w http.ResponseWriter, r *http.Request) {
         Hand: deck[:7],
         Library: deck[7:],
         OnThePlay: flip(),
+        Verbose: false,
     }
     log.Println("endpoint hit: /api/hand")
     json.NewEncoder(w).Encode(oh)
@@ -50,10 +52,14 @@ func handleSequencing(w http.ResponseWriter, r *http.Request) {
         return
     }
     maxTurns := 4
+
+    log.Println(oh)
+
     game, err := lib.NewGame(
         lib.Shuffled(oh.Library),
         oh.Hand,
         oh.OnThePlay,
+        oh.Verbose,
         maxTurns,
     )
     if err != nil {
@@ -86,12 +92,14 @@ func handleEndToEnd(w http.ResponseWriter, r *http.Request) {
         Hand: deck[:7],
         Library: deck[7:],
         OnThePlay: flip(),
+        Verbose: false,
     }
     maxTurns := 4
     game, err := lib.NewGame(
         lib.Shuffled(oh.Library),
         oh.Hand,
         oh.OnThePlay,
+        oh.Verbose,
         maxTurns,
     )
     if err != nil {

@@ -16,7 +16,7 @@ type gameManager struct {
 }
 
 
-func NewGame(libraryRaw []string, handRaw []string, otp bool, maxTurns int) (gameManager, error) {
+func NewGame(libraryRaw []string, handRaw []string, otp bool, verbose bool, maxTurns int) (gameManager, error) {
     allCardNames := []string{}
     handCards := []card{}
     for _, cardName := range handRaw {
@@ -32,7 +32,7 @@ func NewGame(libraryRaw []string, handRaw []string, otp bool, maxTurns int) (gam
     if err != nil {
         return gameManager{}, err
     }
-    state := NewGameState(libraryCards, handCards, otp, maxTurns)
+    state := NewGameState(libraryCards, handCards, otp, verbose, maxTurns)
     return GameManager(state), nil
 }
 

@@ -66,7 +66,7 @@ func (m *mana) Pretty() string {
 }
 
 func (self *mana) ToJSON() string {
-    t := Tag("mana", self.Pretty())
+    t := Tag("mana", self.Pretty(), "")
     return t.ToJSON()
 }
 

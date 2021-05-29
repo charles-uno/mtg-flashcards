@@ -28,10 +28,11 @@ type gameState struct {
     success bool
     timestamp int64
     turn int
+    verbose bool
 }
 
 
-func NewGameState(library []card, hand []card, otp bool, maxTurns int) gameState {
+func NewGameState(library []card, hand []card, otp bool, verbose bool, maxTurns int) gameState {
     state := gameState{
         hand: CardMap(hand),
         // Empty string is fine for the initial game state
@@ -42,6 +43,7 @@ func NewGameState(library []card, hand []card, otp bool, maxTurns int) gameState
         onThePlay: otp,
         timestamp: timestamp(),
         turn: 0,
+        verbose: verbose,
     }
     if otp {
         state.logText("on the play")
@@ -133,8 +135,7 @@ func (self *gameState) skippedLandDrop() bool {
     // 2. We have a land play remaining
     // 3. We have less than 6 mana available
     // Note: this has a very small chance to miss lines! For example, if we
-    // have 4 mana it might make sense to keep Bojuka Bog in hand in case we
-    // draw into a second Amulet.
+    // have 2x Amulet we might want to untap before playing Bojuka Bog.
     if self.landPlays > 0 && self.manaPool.Total < 6 {
         for c, _ := range self.hand.Items() {
             if c.IsLand() && !c.IsBounceLand() {
@@ -180,11 +181,35 @@ func (clone gameState) passTurn() []gameState {
     clone.logText("turn " + strconv.Itoa(clone.turn))
     // Empty mana pool then tap out
     clone.manaPool = mana{}
+    nDryads := clone.battlefield.Count(Card("Dryad of the Ilysian Grove"))
     for c, n := range clone.battlefield.Items() {
         m := c.TapsFor()
+        if m == Mana("1") && nDryads > 0 {
+            m = Mana("G")
+        }
         clone.manaPool = clone.manaPool.Plus(m.Times(n))
     }
     clone.logManaPool()
+    // Handling for Urza's Saga
+    for clone.battlefield.Count(Card("Urza's Saga (II)")) > 0 {
+        clone.logText(", " )
+        clone.logCard(Card("Urza's Saga (II)"))
+        clone.logText(" to III gets ")
+        clone.logCard(Card("Amulet of Vigor"))
+        clone.battlefield = clone.battlefield.Replace(
+            Card("Urza's Saga (II)"),
+            Card("Amulet of Vigor"),
+        )
+    }
+    for clone.battlefield.Count(Card("Urza's Saga")) > 0 {
+        clone.logText(", ")
+        clone.logCard(Card("Urza's Saga"))
+        clone.logText(" to II")
+        clone.battlefield = clone.battlefield.Replace(
+            Card("Urza's Saga"),
+            Card("Urza's Saga (II)"),
+        )
+    }
     // Pay for Pact
     if clone.manaDebt.Total > 0 {
         m, err := clone.manaPool.Minus(clone.manaDebt)
@@ -197,8 +222,7 @@ func (clone gameState) passTurn() []gameState {
         clone.logManaPool()
     }
     // Reset land drops. Check for Dryad, Scout, Azusa
-    clone.landPlays = 1 +
-        clone.battlefield.Count(Card("Dryad of the Ilysian Grove")) +
+    clone.landPlays = 1 + nDryads +
         clone.battlefield.Count(Card("Sakura-Tribe Scout")) +
         2*clone.battlefield.Count(Card("Azusa, Lost but Seeking"))
     if clone.turn > 1 || !clone.onThePlay {
@@ -339,12 +363,20 @@ func (clone gameState) playHelper(c card) []gameState {
             return clone.playBojukaBog()
         case "Castle Garenbrig":
             return clone.playCastleGarenbrig()
+        case "Crumbling Vestige":
+            return clone.playCrumblingVestige()
         case "Forest":
             return clone.playForest()
         case "Simic Growth Chamber":
             return clone.playSimicGrowthChamber()
+        case "Urza's Saga":
+            return clone.playUrzasSaga()
+        case "Urza's Saga (II)":
+            return clone.playUrzasSagaII()
         case "Wastes":
             return clone.playWastes()
+        case "Valakut, the Molten Pinnacle":
+            return clone.playValakut()
     }
     log.Fatal("not sure how to play: " + c.name)
     return []gameState{}
@@ -355,7 +387,16 @@ func (clone gameState) activateCastleGarenbrig() []gameState {
     clone.manaPool = clone.manaPool.Plus(Mana("GGGGGG"))
     clone.logManaPool()
     // Only activate immediately before casting Titan
-    return clone.cast(Card("Primeval Titan"))
+    ret := append(
+        clone.cast(Card("Primeval Titan")),
+        clone.cast(Card("Summoner's Pact"))...,
+    )
+    for _, state := range ret {
+        if state.success {
+            return []gameState{state}
+        }
+    }
+    return []gameState{}
 }
 
 
@@ -530,7 +571,30 @@ func (clone gameState) playCastleGarenbrig() []gameState {
 }
 
 
+func (clone gameState) playCrumblingVestige() []gameState {
+    clone.manaPool = clone.manaPool.Plus(Mana("G"))
+    return []gameState{clone}
+}
+
+
 func (clone gameState) playForest() []gameState {
+    return []gameState{clone}
+}
+
+
+func (clone gameState) playUrzasSaga() []gameState {
+    return []gameState{clone}
+}
+
+
+func (clone gameState) playUrzasSagaII() []gameState {
+    clone.battlefield = clone.battlefield.Minus(Card("Urza's Saga (II)"))
+    clone.battlefield = clone.battlefield.Plus(Card("Urza's Saga"))
+    return []gameState{clone}
+}
+
+
+func (clone gameState) playValakut() []gameState {
     return []gameState{clone}
 }
 
@@ -574,10 +638,7 @@ func (clone gameState) draw(n int) []gameState {
 
 
 func (self *gameState) logManaPool() {
-    // Might want this back later, but for now let's skip it
-    return
-
-    if self.manaPool.Total > 0 {
+    if self.verbose && self.manaPool.Total > 0 {
         self.logText(", ")
         self.logMana(self.manaPool)
         self.logText(" in pool")
@@ -587,7 +648,7 @@ func (self *gameState) logManaPool() {
 
 func (self *gameState) logBreak() {
     self.resolveCache()
-    t := Tag("break", "")
+    t := Tag("break", "", "")
     self.jsonLog += t.ToJSON() + ","
 }
 
@@ -599,7 +660,7 @@ func (self *gameState) logText(s string) {
 
 func (self *gameState) resolveCache() {
     if self.jsonCache != "" {
-        t := Tag("text", self.jsonCache)
+        t := Tag("text", self.jsonCache, "")
         self.jsonLog += t.ToJSON() + ","
         self.jsonCache = ""
     }

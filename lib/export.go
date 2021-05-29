@@ -15,13 +15,14 @@ type report struct {
 
 
 type tag struct {
-    Type string `json:"type"`
-    Text string `json:"text"`
+    Type string   `json:"type"`
+    Text string   `json:"text"`
+    Target string `json:"target"`
 }
 
 
-func Tag(tagType string, tagText string) tag {
-    return tag{Type: tagType, Text: tagText}
+func Tag(tagType string, display string, target string) tag {
+    return tag{Type: tagType, Text: display, Target: target}
 }
 
 
@@ -66,7 +67,7 @@ func PrettyJSON(s string) string {
 
 
 func slug(s string) string {
-    for _, c := range []string{" ", "-", "'", ","} {
+    for _, c := range []string{" ", "-", "'", ",", "(", ")"} {
         s = strings.ReplaceAll(s, c, "")
     }
     return s
